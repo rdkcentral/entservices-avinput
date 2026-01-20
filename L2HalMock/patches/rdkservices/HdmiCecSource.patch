@@ -1,0 +1,21 @@
+diff --git a/HdmiCecSource/HdmiCecSource.cpp b/HdmiCecSource/HdmiCecSource.cpp
+index dbefbd1d..c9480ebc 100644
+--- a/HdmiCecSource/HdmiCecSource.cpp
++++ b/HdmiCecSource/HdmiCecSource.cpp
+@@ -91,7 +91,7 @@ static int32_t powerState = 1;
+ static PowerStatus tvPowerState = 1;
+ static bool isDeviceActiveSource = false;
+ static bool isLGTvConnected = false;
+-
++extern "C" void __gcov_exit();
+ namespace WPEFramework
+ {
+     namespace {
+@@ -521,6 +521,7 @@ namespace WPEFramework
+            smConnection = NULL;
+ 
+            DeinitializeIARM();
++           __gcov_exit();
+        }
+ 
+ 	    void HdmiCecSource::sendKeyPressEvent(const int logicalAddress, int keyCode)

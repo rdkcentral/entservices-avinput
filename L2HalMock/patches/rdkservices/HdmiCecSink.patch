@@ -1,0 +1,33 @@
+Signed-off-by: Kishore  Darmaradje <Kishore_Darmaradje@comcast.com>
+---
+diff --git a/HdmiCecSink/HdmiCecSink.cpp b/HdmiCecSink/HdmiCecSink.cpp
+index 6dd5c229..ac078ca0 100644
+--- a/HdmiCecSink/HdmiCecSink.cpp
++++ b/HdmiCecSink/HdmiCecSink.cpp
+@@ -172,7 +172,7 @@ static float cecVersion = 1.4;
+ static AllDeviceTypes allDevicetype = ALL_DEVICE_TYPES;
+ static std::vector<RcProfile> rcProfile = {RC_PROFILE_TV};
+ static std::vector<DeviceFeatures> deviceFeatures = {DEVICE_FEATURES_TV};
+-
++extern "C" void __gcov_exit();
+ #define API_VERSION_NUMBER_MAJOR 1
+ #define API_VERSION_NUMBER_MINOR 3
+ #define API_VERSION_NUMBER_PATCH 7
+@@ -848,6 +848,7 @@ namespace WPEFramework
+             HdmiCecSink::_instance = nullptr;
+             DeinitializeIARM();
+ 	    LOGWARN(" HdmiCecSink Deinitialize() Done");
++		__gcov_exit();
+        }
+ 
+        const void HdmiCecSink::InitializeIARM()
+@@ -3418,7 +3419,8 @@ namespace WPEFramework
+       void HdmiCecSink::getCecVersion()
+       {
+ 	  RFC_ParamData_t param = {0};
+-          WDMP_STATUS status = getRFCParameter((char*)"thunderapi", TR181_HDMICECSINK_CEC_VERSION, &param);
++        //   WDMP_STATUS status = getRFCParameter((char*)"thunderapi", TR181_HDMICECSINK_CEC_VERSION, &param);
++		WDMP_STATUS status = WDMP_FAILURE;
+ 	  if(WDMP_SUCCESS == status && param.type == WDMP_STRING) {
+              LOGINFO("CEC Version from RFC = [%s] \n", param.value);
+              cecVersion = atof(param.value);

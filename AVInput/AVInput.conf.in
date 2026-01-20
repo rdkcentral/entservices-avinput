@@ -1,0 +1,12 @@
+precondition = ["Platform"]
+callsign = "org.rdk.AVInput"
+autostart = "false"
+startuporder = "@PLUGIN_AVINPUT_STARTUPORDER@"
+
+configuration = JSON()
+rootobject = JSON()
+
+rootobject.add("mode", "@PLUGIN_AVINPUT_MODE@")
+rootobject.add("locator", "lib@PLUGIN_IMPLEMENTATION@.so")
+
+configuration.add("root", rootobject)

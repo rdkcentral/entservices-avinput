@@ -1,0 +1,38 @@
+Signed-off-by: Kishore  Darmaradje <Kishore_Darmaradje@comcast.com>
+---
+--- ./FindConfigGenerator.cmake_old	2024-01-18 11:55:45.984677544 -0500
++++ ./FindConfigGenerator.cmake	2024-01-22 14:08:37.000000000 -0500
+@@ -88,7 +88,8 @@
+             message(STATUS "Component: ${_component}")
+         endif()
+     endif()
+-
++    
++    #[[ 
+     if(ARG_CUSTOM_PARAMS_WHITELIST)
+         set(CONFIG_GENERATOR_PARAMS_WHITELIST "${ARG_CUSTOM_PARAMS_WHITELIST}")
+     else()
+@@ -188,10 +189,10 @@
+             list(APPEND _execute_command  ${plugin} "${CMAKE_CURRENT_BINARY_DIR}/config")
+ 
+             execute_process(COMMAND ${PYTHON_EXECUTABLE} ${_execute_command} RESULT_VARIABLE rv)
+-            if(NOT ${rv} EQUAL 0)
+-                message(FATAL_ERROR "config_generator failed.")
+-                return()
+-            endif()
++	     if(NOT ${rv} EQUAL 0)
++	       message(FATAL_ERROR "config_generator failed.")
++	       return()
++	    endif()
+             set(config_generated "Y")
+         else()
+             if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.20.0 OR NOT LEGACY_CONFIG_GENERATOR)
+@@ -337,6 +338,7 @@
+     unset(_plugins)
+     unset(_classname)
+     unset(_component)
+-
++    ]]
+ endfunction(write_config)
+ 
++

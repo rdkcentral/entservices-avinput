@@ -1,0 +1,16 @@
+Signed-off-by: Kishore  Darmaradje <Kishore_Darmaradje@comcast.com>
+---
+diff --git a/Source/core/JSONRPC.h b/Source/core/JSONRPC.h
+index 7b48a579..015c18b8 100644
+--- a/Source/core/JSONRPC.h
++++ b/Source/core/JSONRPC.h
+@@ -149,7 +149,8 @@ namespace Core {
+                         Text = _T("Requested service is not available.");
+                         break;
+                     default:
+-                        Code = ApplicationErrorCodeBase - static_cast<int32_t>(frameworkError);
++                        // Code = ApplicationErrorCodeBase - static_cast<int32_t>(frameworkError);
++                        Code = frameworkError;
+                         Text = Core::ErrorToString(frameworkError);
+                         break;
+                     }

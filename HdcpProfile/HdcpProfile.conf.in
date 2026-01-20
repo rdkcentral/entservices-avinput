@@ -1,0 +1,12 @@
+precondition = ["Platform"]
+callsign = "org.rdk.HdcpProfile"
+autostart = "@PLUGIN_HDCPPROFILE_AUTOSTART@"
+startuporder = "@PLUGIN_HDCPPROFILE_STARTUPORDER@"
+
+configuration = JSON()
+rootobject = JSON()
+
+rootobject.add("mode", "@PLUGIN_HDCPPROFILE_MODE@")
+rootobject.add("locator", "lib@PLUGIN_IMPLEMENTATION@.so")
+
+configuration.add("root", rootobject)

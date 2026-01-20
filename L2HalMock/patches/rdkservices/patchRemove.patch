@@ -1,0 +1,58 @@
+Signed-off-by: Kishore  Darmaradje <Kishore_Darmaradje@comcast.com>
+---
+diff --git a/HdmiCecSource/CMakeLists.txt b/HdmiCecSource/CMakeLists.txt
+index daabbee3..bd14cca5 100644
+--- a/HdmiCecSource/CMakeLists.txt
++++ b/HdmiCecSource/CMakeLists.txt
+@@ -40,6 +40,23 @@ target_include_directories(${MODULE_NAME} PRIVATE ${DS_INCLUDE_DIRS})
+ 
+ target_link_libraries(${MODULE_NAME} PUBLIC ${NAMESPACE}Plugins::${NAMESPACE}Plugins ${IARMBUS_LIBRARIES} ${CEC_LIBRARIES} ${DS_LIBRARIES} )
+ 
++if(HALMOCK_PROJECT)
++file(GLOB libraries ${DS_LIBRARIES}/*.so)
++foreach(lib ${libraries})
++        target_link_libraries(${MODULE_NAME} PUBLIC ${NAMESPACE}Plugins::${NAMESPACE}Plugins ${lib})
++endforeach(lib)
++
++file(GLOB libraries ${IARM_LIBRARIES}/*.so)
++foreach(lib ${libraries})
++        target_link_libraries(${MODULE_NAME} PUBLIC ${NAMESPACE}Plugins::${NAMESPACE}Plugins ${lib})
++endforeach(lib)
++
++file(GLOB libraries ${CEC_LIBRARIES}/*.so)
++foreach(lib ${libraries})
++        target_link_libraries(${MODULE_NAME} PUBLIC ${NAMESPACE}Plugins::${NAMESPACE}Plugins ${lib})
++endforeach(lib)
++endif()
++
+ if (NOT RDK_SERVICES_TEST)
+     target_compile_options(${MODULE_NAME} PRIVATE -Wno-error=deprecated)
+ endif ()
+diff --git a/cmake/FindCEC.cmake b/cmake/FindCEC.cmake
+index a55dbbd2..e9c2b3b5 100644
+--- a/cmake/FindCEC.cmake
++++ b/cmake/FindCEC.cmake
+@@ -34,7 +34,9 @@ find_path(OSAL_INCLUDE_DIRS NAMES osal/Mutex.hpp PATH_SUFFIXES osal/include)
+ find_path(CEC_HOST_INCLUDE_DIRS NAMES ccec/host/RDK.hpp PATH_SUFFIXES host/include)
+ find_path(CEC_IARM_INCLUDE_DIRS NAMES ccec/drivers/iarmbus/CecIARMBusMgr.h PATH_SUFFIXES ccec/drivers/include)
+ 
++if(NOT HALMOCK_PROJECT)
+ set(CEC_LIBRARIES "-Wl,--no-as-needed" ${CEC_LIBRARIES} ${CEC_IARM_LIBRARIES} ${OSAL_LIBRARIES} "-Wl,--as-needed")
++endif()
+ 
+ set(CEC_LIBRARIES ${CEC_LIBRARIES} CACHE PATH "Path to CEC library")
+ 
+diff --git a/cmake/FindDS.cmake b/cmake/FindDS.cmake
+index b858fffc..15ea879c 100644
+--- a/cmake/FindDS.cmake
++++ b/cmake/FindDS.cmake
+@@ -33,7 +33,9 @@ find_path(DS_INCLUDE_DIRS NAMES manager.hpp PATH_SUFFIXES rdk/ds)
+ find_path(DSHAL_INCLUDE_DIRS NAMES dsTypes.h PATH_SUFFIXES rdk/ds-hal)
+ find_path(DSRPC_INCLUDE_DIRS NAMES dsMgr.h PATH_SUFFIXES rdk/ds-rpc)
+ 
++if(NOT HALMOCK_PROJECT)
+ set(DS_LIBRARIES ${DS_LIBRARIES} ${DSHAL_LIBRARIES})
++endif()
+ set(DS_LIBRARIES ${DS_LIBRARIES} CACHE PATH "Path to DS library")
+ set(DS_INCLUDE_DIRS ${DS_INCLUDE_DIRS} ${DSHAL_INCLUDE_DIRS} ${DSRPC_INCLUDE_DIRS})
+ set(DS_INCLUDE_DIRS ${DS_INCLUDE_DIRS} CACHE PATH "Path to DS include")

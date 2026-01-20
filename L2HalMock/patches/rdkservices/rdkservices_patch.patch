@@ -1,0 +1,276 @@
+Signed-off-by: Kishore  Darmaradje <Kishore_Darmaradje@comcast.com>
+---
+diff -Naur rdkservices_org/cmake/FindCEC.cmake rdkservices/cmake/FindCEC.cmake
+--- rdkservices_org/cmake/FindCEC.cmake	2024-01-23 09:20:14.254329106 -0500
++++ rdkservices/cmake/FindCEC.cmake	2024-01-23 09:38:36.752032679 -0500
+@@ -25,21 +25,31 @@
+ 
+ find_package(PkgConfig)
+ 
+-find_library(CEC_LIBRARIES NAMES RCEC)
+-find_library(CEC_IARM_LIBRARIES NAMES RCECIARMBusHal)
+-find_library(OSAL_LIBRARIES NAMES RCECOSHal)
+-
+-find_path(CEC_INCLUDE_DIRS NAMES ccec/Connection.hpp PATH_SUFFIXES ccec/include)
+-find_path(OSAL_INCLUDE_DIRS NAMES osal/Mutex.hpp PATH_SUFFIXES osal/include)
+-find_path(CEC_HOST_INCLUDE_DIRS NAMES ccec/host/RDK.hpp PATH_SUFFIXES host/include)
+-find_path(CEC_IARM_INCLUDE_DIRS NAMES ccec/drivers/iarmbus/CecIARMBusMgr.h PATH_SUFFIXES ccec/drivers/include)
+-
+-set(CEC_LIBRARIES "-Wl,--no-as-needed" ${CEC_LIBRARIES} ${CEC_IARM_LIBRARIES} ${OSAL_LIBRARIES} "-Wl,--as-needed")
+-
+-set(CEC_LIBRARIES ${CEC_LIBRARIES} CACHE PATH "Path to CEC library")
+-
+-set(CEC_INCLUDE_DIRS ${CEC_INCLUDE_DIRS} ${OSAL_INCLUDE_DIRS} ${CEC_HOST_INCLUDE_DIRS} ${CEC_IARM_INCLUDE_DIRS})
+-set(CEC_INCLUDE_DIRS ${CEC_INCLUDE_DIRS} CACHE PATH "Path to CEC include")
++#find_library(CEC_LIBRARIES NAMES RCEC) 
++#find_library(CEC_IARM_LIBRARIES NAMES RCECIARMBusHal)
++#find_library(OSAL_LIBRARIES NAMES RCECOSHal)
++
++#find_path(CEC_INCLUDE_DIRS NAMES ccec PATH_SUFFIXES ccec/include)
++#find_path(OSAL_INCLUDE_DIRS NAMES osal PATH_SUFFIXES osal/include)
++#find_path(CEC_HOST_INCLUDE_DIRS NAMES ccec/host PATH_SUFFIXES host/include)
++#find_path(CEC_IARM_INCLUDE_DIRS NAMES ccec/drivers/iarmbus PATH_SUFFIXES ccec/drivers/include)
++
++#set(CEC_LIBRARIES "-Wl,--no-as-needed" ${CEC_LIBRARIES} ${CEC_IARM_LIBRARIES} ${OSAL_LIBRARIES} "-Wl,--as-needed")
++
++#set(CEC_LIBRARIES ${CEC_LIBRARIES} CACHE PATH "Path to library")
++
++#set(CEC_INCLUDE_DIRS ${CEC_INCLUDE_DIRS} ${OSAL_INCLUDE_DIRS} ${CEC_HOST_INCLUDE_DIRS} ${CEC_IARM_INCLUDE_DIRS})
++#set(CEC_INCLUDE_DIRS ${CEC_INCLUDE_DIRS} CACHE PATH "Path to include directories")
++
++set(CEC_INCLUDE_DIRS ${CMAKE_ROOT_DIR}/deps/rdk/hdmicec/ccec/include)
++set(OSAL_INCLUDE_DIRS ${CMAKE_ROOT_DIR}/deps/rdk/hdmicec/osal/include)
++set(CEC_HOST_INCLUDE_DIRS ${CMAKE_ROOT_DIR}/deps/rdk/hdmicec/host/include)
++set(CEC_IARM_INCLUDE_DIRS ${CMAKE_ROOT_DIR}/deps/rdk/hdmicec/ccec/drivers/include)
++message(STATUS "Anooj CEC_INCLUDE_DIRS: ${CEC_INCLUDE_DIRS}")
++set(CEC_DIRS ${CEC_INCLUDE_DIRS} ${OSAL_INCLUDE_DIRS} ${CEC_HOST_INCLUDE_DIRS} ${CEC_IARM_INCLUDE_DIRS})
++message(STATUS "Anooj CEC_DIRS: ${CEC_DIRS}")
++set(CEC_INCLUDE_DIRS ${CEC_INCLUDE_DIRS} CACHE PATH "Path to include directories")
++set(CEC_LIBRARIES ${CMAKE_ROOT_DIR}/deps/rdk/hdmicec/install/lib)
+ 
+ include(FindPackageHandleStandardArgs)
+ #FIND_PACKAGE_HANDLE_STANDARD_ARGS(IARMBUS DEFAULT_MSG IARMBUS_INCLUDE_DIRS IARMBUS_LIBRARIES)
+diff -Naur rdkservices_org/cmake/FindDS.cmake rdkservices/cmake/FindDS.cmake
+--- rdkservices_org/cmake/FindDS.cmake	2024-01-23 09:20:14.254329106 -0500
++++ rdkservices/cmake/FindDS.cmake	2024-01-23 09:20:26.374459926 -0500
+@@ -25,18 +25,24 @@
+ 
+ find_package(PkgConfig)
+ 
+-find_library(DS_LIBRARIES NAMES ds)
+-find_library(DSHAL_LIBRARIES NAMES dshalcli)
+-find_library(OEMHAL_LIBRARIES NAMES ds-hal)
+-find_library(IARMBUS_LIBRARIES NAMES IARMBus)
+-find_path(DS_INCLUDE_DIRS NAMES manager.hpp PATH_SUFFIXES ds/include)
+-find_path(DSHAL_INCLUDE_DIRS NAMES dsTypes.h PATH_SUFFIXES hal/include)
+-find_path(DSRPC_INCLUDE_DIRS NAMES dsMgr.h PATH_SUFFIXES rpc/include)
+-
+-set(DS_LIBRARIES ${DS_LIBRARIES} ${DSHAL_LIBRARIES})
+-set(DS_LIBRARIES ${DS_LIBRARIES} CACHE PATH "Path to DS library")
+-set(DS_INCLUDE_DIRS ${DS_INCLUDE_DIRS} ${DSHAL_INCLUDE_DIRS} ${DSRPC_INCLUDE_DIRS})
+-set(DS_INCLUDE_DIRS ${DS_INCLUDE_DIRS} CACHE PATH "Path to DS include")
++#find_library(DS_LIBRARIES NAMES ds)
++#find_library(DSHAL_LIBRARIES NAMES dshalcli)
++#find_library(OEMHAL_LIBRARIES NAMES ds-hal)
++#find_library(IARMBUS_LIBRARIES NAMES IARMBus)
++#find_path(DS_INCLUDE_DIRS NAMES manager.hpp PATH_SUFFIXES ds/include)
++#find_path(DSHAL_INCLUDE_DIRS NAMES dsTypes.h PATHS hal/include/)
++#find_path(DSRPC_INCLUDE_DIRS NAMES dsMgr.h PATH_SUFFIXES rpc/include)
++
++#set(DS_LIBRARIES ${DS_LIBRARIES} ${DSHAL_LIBRARIES})
++#set(DS_LIBRARIES ${DS_LIBRARIES} CACHE PATH "Path to DS library")
++#set(DS_INCLUDE_DIRS ${DS_INCLUDE_DIRS} ${DSHAL_INCLUDE_DIRS} ${DSRPC_INCLUDE_DIRS})
++set(DS_INCLUDE_DIRS ${CMAKE_ROOT_DIR}/deps/rdk/devicesettings/ds/include)
++set(DSHAL_INCLUDE_DIRS ${CMAKE_ROOT_DIR}/deps/rdk/devicesettings/hal/include)
++set(DSRPC_INCLUDE_DIRS ${CMAKE_ROOT_DIR}/deps/rdk/devicesettings/rpc/include)
++set(DS_DIRS ${DS_INCLUDE_DIRS} ${DSHAL_INCLUDE_DIRS} ${DSRPC_INCLUDE_DIRS})
++set(DS_LIBRARIES ${CMAKE_ROOT_DIR}/deps/rdk/devicesettings/install/lib)
++#set(DS_INCLUDE_DIRS ${DSHAL_INCLUDE_DIRS}) 
++#set(DS_INCLUDE_DIRS ${DS_INCLUDE_DIRS} CACHE PATH "Path to DS include")
+ 
+ 
+ 
+diff -Naur rdkservices_org/cmake/FindIARMBus.cmake rdkservices/cmake/FindIARMBus.cmake
+--- rdkservices_org/cmake/FindIARMBus.cmake	2024-01-23 09:20:14.254329106 -0500
++++ rdkservices/cmake/FindIARMBus.cmake	2024-01-23 09:20:26.374459926 -0500
+@@ -25,15 +25,12 @@
+ 
+ find_package(PkgConfig)
+ 
+-find_library(IARMBUS_LIBRARIES NAMES IARMBus)
+-find_path(IARMBUS_INCLUDE_DIRS NAMES libIARM.h PATH_SUFFIXES core/include)
+-find_path(IARMIR_INCLUDE_DIRS NAMES irMgr.h PATH_SUFFIXES ir/include)
+-find_path(IARMRECEIVER_INCLUDE_DIRS NAMES receiverMgr.h PATH_SUFFIXES receiver/include)
+-find_path(IARMPWR_INCLUDE_DIRS NAMES pwrMgr.h PATH_SUFFIXES hal/include)
+-
+-set(IARMBUS_LIBRARIES ${IARMBUS_LIBRARIES} CACHE PATH "Path to IARMBus library")
+-set(IARMBUS_INCLUDE_DIRS ${IARMBUS_INCLUDE_DIRS} ${IARMIR_INCLUDE_DIRS} ${IARMRECEIVER_INCLUDE_DIRS} ${IARMPWR_INCLUDE_DIRS})
+-set(IARMBUS_INCLUDE_DIRS ${IARMBUS_INCLUDE_DIRS} ${IARMIR_INCLUDE_DIRS} ${IARMRECEIVER_INCLUDE_DIRS} ${IARMPWR_INCLUDE_DIRS} CACHE PATH "Path to IARMBus include")
++set(IARMBUS_INCLUDE_DIRS ${CMAKE_ROOT_DIR}/deps/rdk/iarmbus/core/include)
++set(IARMIR_INCLUDE_DIRS ${CMAKE_ROOT_DIR}/deps/rdk/iarmmgrs/ir/include)
++set(IARMRECEIVER_INCLUDE_DIRS ${CMAKE_ROOT_DIR}/deps/rdk/iarmmgrs/receiver/include)
++set(IARMPWR_INCLUDE_DIRS ${CMAKE_ROOT_DIR}/deps/rdk/iarmmgrs/hal/include)
++set(IARM_DIRS ${IARMBUS_INCLUDE_DIRS} ${IARMIR_INCLUDE_DIRS} ${IARMRECEIVER_INCLUDE_DIRS} ${IARMPWR_INCLUDE_DIRS})
++set(IARM_LIBRARIES ${CMAKE_ROOT_DIR}/deps/rdk/iarmbus/install/)
+ 
+ include(FindPackageHandleStandardArgs)
+ FIND_PACKAGE_HANDLE_STANDARD_ARGS(IARMBUS DEFAULT_MSG IARMBUS_INCLUDE_DIRS IARMBUS_LIBRARIES)
+diff -Naur rdkservices_org/CMakeLists.txt rdkservices/CMakeLists.txt
+--- rdkservices_org/CMakeLists.txt	2024-01-23 09:20:14.254329106 -0500
++++ rdkservices/CMakeLists.txt	2024-01-23 09:20:26.378459949 -0500
+@@ -1,69 +1,70 @@
+-###
+-# If not stated otherwise in this file or this component's LICENSE
+-# file the following copyright and licenses apply:
+-#
+-# Copyright 2023 RDK Management
+-#
+-# Licensed under the Apache License, Version 2.0 (the "License");
+-# you may not use this file except in compliance with the License.
+-# You may obtain a copy of the License at
+-#
+-# http://www.apache.org/licenses/LICENSE-2.0
+-#
+-# Unless required by applicable law or agreed to in writing, software
+-# distributed under the License is distributed on an "AS IS" BASIS,
+-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-# See the License for the specific language governing permissions and
+-# limitations under the License.
+-###
+-
+-cmake_minimum_required(VERSION 3.3)
+-
+-find_package(WPEFramework)
+-
+-# All packages that did not deliver a CMake Find script (and some deprecated scripts that need to be removed)
+-# are located in the cmake directory. Include it in the search.
+-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/")
+-
+-option(COMCAST_CONFIG "Comcast services configuration" ON)
+-if(COMCAST_CONFIG)
+-    include(services.cmake)
+-endif()
+-
+-option(PLUGIN_OCICONTAINER "Include OCIContainer plugin" OFF)
+-option(PLUGIN_RUSTBRIDGE "Include RustBridge plugin" OFF)
+-
+-if(RDK_SERVICES_TEST)
+-    include(tests.cmake)
+-endif()
+-
+-# Library installation section
+-string(TOLOWER ${NAMESPACE} STORAGE_DIRECTORY)
+-
+-# for writing pc and config files
+-include(CmakeHelperFunctions)
+-
+-if(PLUGIN_HDMICECSOURCE)
+-    add_subdirectory(HdmiCecSource)
+-endif()
+-
+-if(WPEFRAMEWORK_CREATE_IPKG_TARGETS)
+-    set(CPACK_GENERATOR "DEB")
+-    set(CPACK_DEB_COMPONENT_INSTALL ON)
+-    set(CPACK_COMPONENTS_GROUPING IGNORE)
+-
+-    set(CPACK_DEBIAN_PACKAGE_NAME "${WPEFRAMEWORK_PLUGINS_OPKG_NAME}")
+-    set(CPACK_DEBIAN_PACKAGE_VERSION "${WPEFRAMEWORK_PLUGINS_OPKG_VERSION}")
+-    set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "${WPEFRAMEWORK_PLUGINS_OPKG_ARCHITECTURE}")
+-    set(CPACK_DEBIAN_PACKAGE_MAINTAINER "${WPEFRAMEWORK_PLUGINS_OPKG_MAINTAINER}")
+-    set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "${WPEFRAMEWORK_PLUGINS_OPKG_DESCRIPTION}")
+-    set(CPACK_PACKAGE_FILE_NAME "${WPEFRAMEWORK_PLUGINS_OPKG_FILE_NAME}")
+-
+-    # list of components from which packages will be generated
+-    set(CPACK_COMPONENTS_ALL
+-            ${NAMESPACE}WebKitBrowser
+-            WPEInjectedBundle
+-            )
+-
+-    include(CPack)
+-endif()
++###
++# If not stated otherwise in this file or this component's LICENSE
++# file the following copyright and licenses apply:
++#
++# Copyright 2023 RDK Management
++#
++# Licensed under the Apache License, Version 2.0 (the "License");
++# you may not use this file except in compliance with the License.
++# You may obtain a copy of the License at
++#
++# http://www.apache.org/licenses/LICENSE-2.0
++#
++# Unless required by applicable law or agreed to in writing, software
++# distributed under the License is distributed on an "AS IS" BASIS,
++# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++# See the License for the specific language governing permissions and
++# limitations under the License.
++###
++
++cmake_minimum_required(VERSION 3.3)
++project(halmock)
++find_package(WPEFramework PATHS ${WORKSPACE}/install/usr/lib/cmake/WPEFramework)
++set(CMAKE_ROOT_DIR "${WORKSPACE}")
++set(URL_INCLUDE_DIR "${WORKSPACE}/Thunder/Source/websocket")
++# All packages that did not deliver a CMake Find script (and some deprecated scripts that need to be removed)
++# are located in the cmake directory. Include it in the search.
++list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/")
++
++option(COMCAST_CONFIG "Comcast services configuration" ON)
++if(COMCAST_CONFIG)
++    include(services.cmake)
++endif()
++
++option(PLUGIN_OCICONTAINER "Include OCIContainer plugin" OFF)
++option(PLUGIN_RUSTBRIDGE "Include RustBridge plugin" OFF)
++
++if(RDK_SERVICES_TEST)
++    include(tests.cmake)
++endif()
++
++# Library installation section
++string(TOLOWER ${NAMESPACE} STORAGE_DIRECTORY)
++
++# for writing pc and config files
++include(${WORKSPACE}/install/usr/lib/cmake/WPEFramework/common/CmakeHelperFunctions.cmake)
++
++if(PLUGIN_HDMICECSOURCE)
++  add_subdirectory(HdmiCecSource)
++endif()
++
++if(WPEFRAMEWORK_CREATE_IPKG_TARGETS)
++    set(CPACK_GENERATOR "DEB")
++    set(CPACK_DEB_COMPONENT_INSTALL ON)
++    set(CPACK_COMPONENTS_GROUPING IGNORE)
++
++    set(CPACK_DEBIAN_PACKAGE_NAME "${WPEFRAMEWORK_PLUGINS_OPKG_NAME}")
++    set(CPACK_DEBIAN_PACKAGE_VERSION "${WPEFRAMEWORK_PLUGINS_OPKG_VERSION}")
++    set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "${WPEFRAMEWORK_PLUGINS_OPKG_ARCHITECTURE}")
++    set(CPACK_DEBIAN_PACKAGE_MAINTAINER "${WPEFRAMEWORK_PLUGINS_OPKG_MAINTAINER}")
++    set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "${WPEFRAMEWORK_PLUGINS_OPKG_DESCRIPTION}")
++    set(CPACK_PACKAGE_FILE_NAME "${WPEFRAMEWORK_PLUGINS_OPKG_FILE_NAME}")
++
++    # list of components from which packages will be generated
++    set(CPACK_COMPONENTS_ALL
++            ${NAMESPACE}WebKitBrowser
++            WPEInjectedBundle
++            )
++
++    include(CPack)
++endif()
+diff -Naur rdkservices_org/HdmiCecSource/CMakeLists.txt rdkservices/HdmiCecSource/CMakeLists.txt
+--- rdkservices_org/HdmiCecSource/CMakeLists.txt	2024-01-23 09:20:14.194328162 -0500
++++ rdkservices/HdmiCecSource/CMakeLists.txt	2024-01-23 09:40:13.224387067 -0500
+@@ -34,9 +34,9 @@
+ find_package(IARMBus)
+ find_package(CEC)
+ 
+-target_include_directories(${MODULE_NAME} PRIVATE ${IARMBUS_INCLUDE_DIRS} ../helpers)
+-target_include_directories(${MODULE_NAME} PRIVATE ${CEC_INCLUDE_DIRS})
+-target_include_directories(${MODULE_NAME} PRIVATE ${DS_INCLUDE_DIRS})
++target_include_directories(${MODULE_NAME} PRIVATE ${IARM_DIRS} ../helpers)
++target_include_directories(${MODULE_NAME} PRIVATE ${CEC_DIRS})
++target_include_directories(${MODULE_NAME} PRIVATE ${DS_DIRS})
+ 
+ target_link_libraries(${MODULE_NAME} PUBLIC ${NAMESPACE}Plugins::${NAMESPACE}Plugins ${IARMBUS_LIBRARIES} ${CEC_LIBRARIES} ${DS_LIBRARIES} )
+ 

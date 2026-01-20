@@ -1,0 +1,9 @@
+{
+ "locator":"libWPEFrameworkFrontPanel.so",
+ "classname":"FrontPanel",
+ "precondition":[
+  "Platform"
+ ],
+ "callsign":"org.rdk.FrontPanel",
+ "autostart":true
+}

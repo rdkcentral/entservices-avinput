@@ -1,0 +1,23 @@
+Signed-off-by: Kishore  Darmaradje <Kishore_Darmaradje@comcast.com>
+---
+diff --git a/HdcpProfile/HdcpProfile.cpp b/HdcpProfile/HdcpProfile.cpp
+index 4eb5a3b0..40ec7c6c 100644
+--- a/HdcpProfile/HdcpProfile.cpp
++++ b/HdcpProfile/HdcpProfile.cpp
+@@ -46,7 +46,7 @@
+ #define API_VERSION_NUMBER_MAJOR 1
+ #define API_VERSION_NUMBER_MINOR 0
+ #define API_VERSION_NUMBER_PATCH 9
+-
++extern "C" void __gcov_exit();
+ namespace WPEFramework
+ {
+     namespace {
+@@ -102,6 +102,7 @@ namespace WPEFramework
+             //No need to run device::Manager::DeInitialize for individual plugin. As it is a singleton instance
+             //and shared among all wpeframework plugins
+             DeinitializeIARM();
++            __gcov_exit();
+         }
+ 
+         void HdcpProfile::InitializeIARM()

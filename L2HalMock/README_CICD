@@ -1,0 +1,18 @@
+                                        README FOR CI CD HAL MOCK WORKFLOW
+
+
+
+--> HAL_MOCK yml is the workflow file designed to pull/setup the container/docker, build the binaries and execute testcases on the hal mock virtual environment.
+--> A pull request/push on from a branch to sprint,release,develop and main triggers the HAL_MOCK yml.
+--> Paths excluded in the yaml file are tools,tests,.github workflows and readme docs. Which makes the workflow to not trigger job when changes happens in any of these files.
+--> Conditional commit message check has also been enabled in the workflow,which allows the user to trigger the hal mock environment job only when user specifies hdmicecsource_halmock in the commit message.
+--> Workflow steps are:-
+    --> pull the customized docker from JFROG artifactory.
+    --> clone and build the required binaries for the mock environment inside docker.
+    --> make all services up
+    --> execute the currently developed testcases (L2) on Hdmicec source.
+    --> generate a test report containing the execution details.
+    --> fetch the report, upload it as an artifact.
+    --> users can download this test report artifact from the executed job summary.
+    --> stop all services
+--> Destroy the container/Docker
