@@ -8,7 +8,7 @@ on:
 
 jobs:
   build-entservices-on-pr:
-    name: Build entservices-inputoutput component in github rdkcentral
+    name: Build entservices-avinput component in github rdkcentral
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/rdkcentral/docker-rdk-ci:latest
