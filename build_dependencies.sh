@@ -10,7 +10,7 @@ cd ${GITHUB_WORKSPACE}
 #1. Install Dependencies and packages
 
 apt update
-apt install -y libcurl4-openssl-dev valgrind lcov clang libsystemd-dev libboost-all-dev meson curl libunwind-dev
+apt install -y libcurl4-openssl-dev valgrind lcov clang libsystemd-dev libboost-all-dev meson curl libunwind-dev libdrm-dev
 pip install jsonref
 
 ###########################################
