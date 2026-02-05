@@ -21,6 +21,7 @@
 
 #include "Module.h"
 
+#include "UtilsIarm.h"
 #include "UtilsJsonRpc.h"
 #include "dsMgr.h"
 
