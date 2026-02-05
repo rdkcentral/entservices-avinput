@@ -24,14 +24,6 @@ find_package(${NAMESPACE}Plugins REQUIRED)
 
 set(SRC_FILES tests/test_foo_IN.cpp)
 
-if(PLUGIN_HDMICECSINK)
-    set(SRC_FILES ${SRC_FILES} tests/HdmiCecSink_L2Test.cpp)
-endif()
-
-if(PLUGIN_AVOUTPUT)
-    set(SRC_FILES ${SRC_FILES} tests/AVOutputTV_L2Test.cpp)
-endif()
-
 add_library(${MODULE_NAME} SHARED ${SRC_FILES})
 
 set_target_properties(${MODULE_NAME} PROPERTIES
