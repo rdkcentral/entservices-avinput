@@ -93,6 +93,7 @@ echo "Creating mock headers for AVInput plugin dependencies"
 echo "======================================================================================"
 mkdir -p headers
 mkdir -p headers/rdk/ds
+mkdir -p headers/rdk/iarmbus
 echo "dir created successfully"
 echo "======================================================================================"
 
@@ -105,6 +106,10 @@ touch rdk/ds/host.hpp
 touch rdk/ds/manager.hpp
 touch rdk/ds/exception.hpp
 touch rdk/ds/dsMgr.h
+echo "Creating required IARM Bus headers"
+touch rdk/iarmbus/libIARM.h
+touch rdk/iarmbus/libIBus.h
+touch rdk/iarmbus/libIBusDaemon.h
 echo "files created successfully"
 echo "======================================================================================"
 
