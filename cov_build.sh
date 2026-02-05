@@ -23,9 +23,7 @@ cmake -G Ninja -S "$GITHUB_WORKSPACE" -B build/entservices-avinput \
 -DRDK_SERVICES_COVERITY=ON \
 -DRDK_SERVICES_L1_TEST=ON \
 -DDS_FOUND=ON \
--DPLUGIN_HDMICECSOURCE=OFF \
--DPLUGIN_HDCPPROFILE=OFF \
--DPLUGIN_HDMICECSINK=OFF \
+-DPLUGIN_AVINPUT=ON \
 -DCMAKE_CXX_FLAGS="-DEXCEPTIONS_ENABLE=ON \
 -I ${GITHUB_WORKSPACE}/entservices-testframework/Tests/headers \
 -I ${GITHUB_WORKSPACE}/entservices-testframework/Tests/headers/audiocapturemgr \
@@ -52,11 +50,7 @@ cmake -G Ninja -S "$GITHUB_WORKSPACE" -B build/entservices-avinput \
 -include ${GITHUB_WORKSPACE}/entservices-testframework/Tests/mocks/HdmiCec.h \
 -Wall -Wno-unused-result -Werror -Wno-error=format \
 -Wl,-wrap,system -Wl,-wrap,popen -Wl,-wrap,syslog \
--DENABLE_TELEMETRY_LOGGING -DUSE_IARMBUS \
--DENABLE_SYSTEM_GET_STORE_DEMO_LINK -DENABLE_DEEP_SLEEP \
--DENABLE_SET_WAKEUP_SRC_CONFIG -DENABLE_THERMAL_PROTECTION \
--DUSE_DRM_SCREENCAPTURE -DHAS_API_SYSTEM -DHAS_API_POWERSTATE \
--DHAS_RBUS -DDISABLE_SECURITY_TOKEN -DENABLE_DEVICE_MANUFACTURER_INFO -DUSE_THUNDER_R4 -DTHUNDER_VERSION=4 -DTHUNDER_VERSION_MAJOR=4 -DTHUNDER_VERSION_MINOR=4" \
+-DUSE_THUNDER_R4 -DTHUNDER_VERSION=4 -DTHUNDER_VERSION_MAJOR=4 -DTHUNDER_VERSION_MINOR=4" \
 
 cmake --build build/entservices-avinput --target install
 echo "======================================================================================"

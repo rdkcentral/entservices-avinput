@@ -103,8 +103,7 @@ endmacro()
 
 # PLUGIN_AVINPUT
 set (AVINPUT_INC ../../plugin ../../helpers)
-set (AVINPUT_LIBS ${NAMESPACE}AVInput ${NAMESPACE}AVInputImplementation)
-add_plugin_test_ex(PLUGIN_AVINPUT tests/test_AVInput.cpp "${AVINPUT_INC}" "${AVINPUT_LIBS}")
+add_plugin_test_ex(PLUGIN_AVINPUT tests/test_AVInput.cpp "${AVINPUT_INC}" "${NAMESPACE}AvInput")
 
 add_library(${MODULE_NAME} SHARED ${TEST_SRC})
 
