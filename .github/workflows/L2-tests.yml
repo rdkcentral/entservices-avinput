@@ -107,14 +107,14 @@ jobs:
         with:
           repository: rdkcentral/entservices-avinput
           path: entservices-avinput
-          ref: develop
+          ref: topic/RDKEMW-13473
 
       - name: Checkout entservices-testframework
         uses: actions/checkout@v3
         with:
           repository: rdkcentral/entservices-testframework
           path: entservices-testframework
-          ref:  develop
+          ref:  topic/RDKEMW-13473
           token: ${{ secrets.RDKCM_RDKE }}
 
       - name: Checkout googletest
