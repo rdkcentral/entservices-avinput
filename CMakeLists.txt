@@ -45,19 +45,7 @@ if(RDK_SERVICES_L1_TEST)
 endif()
 
 if(PLUGIN_AVINPUT)
-    add_subdirectory(AVInput)
-endif()
-
-if(PLUGIN_HDMICECSOURCE)
-    add_subdirectory(HdmiCecSource)
-endif()
-
-if(PLUGIN_HDMICECSINK)
-    add_subdirectory(HdmiCecSink)
-endif()
-
-if(PLUGIN_HDCPPROFILE)
-    add_subdirectory(HdcpProfile)
+    add_subdirectory(plugin)
 endif()
 
 

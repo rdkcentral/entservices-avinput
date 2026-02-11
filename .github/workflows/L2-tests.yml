@@ -95,26 +95,26 @@ jobs:
           path: entservices-deviceanddisplay
           ref: develop
 
-      - name: Checkout entservices-inputoutput
+      - name: Checkout entservices-avinput
         if: ${{ inputs.caller_source == 'local' }}
         uses: actions/checkout@v3
         with:
-          path: entservices-inputoutput
+          path: entservices-avinput
 
-      - name: Checkout entservices-inputoutput-testframework
+      - name: Checkout entservices-avinput-testframework
         if: ${{ inputs.caller_source == 'testframework' }}
         uses: actions/checkout@v3
         with:
-          repository: rdkcentral/entservices-inputoutput
-          path: entservices-inputoutput
-          ref: develop
+          repository: rdkcentral/entservices-avinput
+          path: entservices-avinput
+          ref: topic/RDKEMW-13473
 
       - name: Checkout entservices-testframework
         uses: actions/checkout@v3
         with:
           repository: rdkcentral/entservices-testframework
           path: entservices-testframework
-          ref:  develop
+          ref:  topic/RDKEMW-13473
           token: ${{ secrets.RDKCM_RDKE }}
 
       - name: Checkout googletest
@@ -328,7 +328,7 @@ jobs:
           -I $GITHUB_WORKSPACE/entservices-testframework/Tests/headers/ccec/drivers
           -I $GITHUB_WORKSPACE/entservices-testframework/Tests/headers/network
           -I $GITHUB_WORKSPACE/entservices-testframework/Tests
-          -I $GITHUB_WORKSPACE/entservices-inputoutput/helpers
+          -I $GITHUB_WORKSPACE/entservices-avinput/helpers
           -I $GITHUB_WORKSPACE/Thunder/Source
           -I $GITHUB_WORKSPACE/Thunder/Source/core
           -I $GITHUB_WORKSPACE/install/usr/include
@@ -380,7 +380,6 @@ jobs:
           -DTHUNDER_VERSION=4
           -DTHUNDER_VERSION_MAJOR=4
           -DTHUNDER_VERSION_MINOR=4
-          -DDEVICE_TYPE=AVOutputTV
           -DPLUGIN_PERSISTENTSTORE_PATH="/tmp/secure/persistent/rdkservicestore"
           -DPLUGIN_PERSISTENTSTORE_LEGACYPATH="/tmp/persistent/rdkservicestore"
           -I $GITHUB_WORKSPACE/entservices-testframework/Tests/headers
@@ -443,11 +442,11 @@ jobs:
           &&
           cmake --install build/entservices-deviceanddisplay
 
-      - name: Build entservices-inputoutput
+      - name: Build entservices-avinput
         run: >
           cmake
-          -S "$GITHUB_WORKSPACE/entservices-inputoutput"
-          -B build/entservices-inputoutput
+          -S "$GITHUB_WORKSPACE/entservices-avinput"
+          -B build/entservices-avinput
           -DCMAKE_TOOLCHAIN_FILE="${{ env.TOOLCHAIN_FILE }}"
           -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/install/usr"
           -DCMAKE_MODULE_PATH="$GITHUB_WORKSPACE/install/tools/cmake"
@@ -460,7 +459,6 @@ jobs:
           -DTHUNDER_VERSION=4
           -DTHUNDER_VERSION_MAJOR=4
           -DTHUNDER_VERSION_MINOR=4
-          -DDEVICE_TYPE=AVOutputTV
           -DPLUGIN_PERSISTENTSTORE_PATH="/tmp/secure/persistent/rdkservicestore"
           -DPLUGIN_PERSISTENTSTORE_LEGACYPATH="/tmp/persistent/rdkservicestore"
           -I $GITHUB_WORKSPACE/entservices-testframework/Tests/headers
@@ -492,7 +490,6 @@ jobs:
           -include $GITHUB_WORKSPACE/entservices-testframework/Tests/mocks/tvSettingsODM.h
           -include $GITHUB_WORKSPACE/entservices-testframework/Tests/mocks/tvTypes.h
           -include $GITHUB_WORKSPACE/entservices-testframework/Tests/mocks/essos-resmgr.h
-          -include $GITHUB_WORKSPACE/entservices-testframework/Tests/mocks/HdmiCec.h
           -Werror -Wall -Wno-unused-result -Wno-deprecated-declarations -Wno-error=format=
           -DUSE_IARMBUS
           -DENABLE_DEEP_SLEEP
@@ -515,18 +512,15 @@ jobs:
           -DCMAKE_DISABLE_FIND_PACKAGE_RBus=ON
           -DCMAKE_DISABLE_FIND_PACKAGE_CEC=ON
           -DPLUGIN_AVINPUT=ON
-          -DPLUGIN_AVOUTPUT=OFF
-          -DPLUGIN_HDMICECSINK=ON
-          -DAVOUTPUT_TV=OFF
           -DUSE_THUNDER_R4=ON
           -DPLUGIN_L2Tests=ON
           -DRDK_SERVICE_L2_TEST=ON
           -DDS_FOUND=ON
           -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
           &&
-          cmake --build build/entservices-inputoutput
+          cmake --build build/entservices-avinput
           &&
-          cmake --install build/entservices-inputoutput
+          cmake --install build/entservices-avinput
 
       - name: Build entservices-testframework
         run: >
@@ -545,7 +539,6 @@ jobs:
           -DTHUNDER_VERSION=4
           -DTHUNDER_VERSION_MAJOR=4
           -DTHUNDER_VERSION_MINOR=4
-          -DDEVICE_TYPE=AVOutputTV
           -DPLUGIN_PERSISTENTSTORE_PATH="/tmp/secure/persistent/rdkservicestore"
           -DPLUGIN_PERSISTENTSTORE_LEGACYPATH="/tmp/persistent/rdkservicestore"
           -I $GITHUB_WORKSPACE/entservices-testframework/Tests/headers
@@ -591,9 +584,6 @@ jobs:
           -DCMAKE_DISABLE_FIND_PACKAGE_RFC=ON
           -DCMAKE_DISABLE_FIND_PACKAGE_RBus=ON
           -DPLUGIN_AVINPUT=ON
-          -DPLUGIN_AVOUTPUT=OFF
-          -DPLUGIN_HDMICECSINK=ON
-          -DAVOUTPUT_TV=OFF
           -DUSE_THUNDER_R4=ON
           -DPLUGIN_L2Tests=ON
           -DRDK_SERVICE_L2_TEST=ON
@@ -739,12 +729,12 @@ jobs:
           &&
           lcov -c
           -o coverage.info
-          -d build/entservices-inputoutput
+          -d build/entservices-avinput
           &&
           lcov
           -r coverage.info
           '/usr/include/*'
-          '*/build/entservices-inputoutput/_deps/*'
+          '*/build/entservices-avinput/_deps/*'
           '*/build/entservices-deviceanddisplay/_deps/*'
           '*/build/entservices-entservices-testframework/_deps/*'
           '*/build/mocks/*'
@@ -757,14 +747,14 @@ jobs:
           &&
           genhtml
           -o coverage
-          -t "entservices-inputoutput coverage"
+          -t "entservices-avinput coverage"
           filtered_coverage.info
 
       - name: Upload artifacts
         if: ${{ !env.ACT }}
         uses: actions/upload-artifact@v4
         with:
-          name: artifacts-L2-inputoutput
+          name: artifacts-L2-avinput
           path: |
             coverage/
             valgrind_log
