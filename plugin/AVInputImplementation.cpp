@@ -21,6 +21,7 @@
 #include <curl/curl.h>
 #include <fstream>
 #include <time.h>
+#include <utility>
 
 #include "UtilsJsonRpc.h"
 
