@@ -42,7 +42,7 @@ namespace Plugin {
     SERVICE_REGISTRATION(AVInputImplementation, 1, 0);
     AVInputImplementation* AVInputImplementation::_instance = nullptr;
 
-    AVInputImplementation::AVInputImplementation() : _adminLock(), _registeredDsEventHandlers(false)
+    AVInputImplementation::AVInputImplementation() : _adminLock(), _service(nullptr), _registeredDsEventHandlers(false)
     {
         LOGINFO("Create AVInputImplementation Instance");
 
@@ -517,7 +517,7 @@ namespace Plugin {
                     }
                     inputDevice.locator = locator.str();
                     LOGINFO("getInputDevices id %d, locator=[%s], connected=[%d]", i, inputDevice.locator.c_str(), inputDevice.connected);
-                    inputDeviceList.push_back(inputDevice);
+                    inputDeviceList.push_back(std::move(inputDevice));
                 }
             }
         } catch (const std::exception& e) {
@@ -597,7 +597,7 @@ namespace Plugin {
         try {
             vector<uint8_t> edidVec2;
             device::HdmiInput::getInstance().getEDIDBytesInfo(id, edidVec2);
-            edidVec = edidVec2; // edidVec must be "unknown" unless we successfully get to this line
+            edidVec = std::move(edidVec2); // edidVec must be "unknown" unless we successfully get to this line
 
             // convert to base64
             uint16_t size = min(edidVec.size(), (size_t)numeric_limits<uint16_t>::max());
@@ -1172,7 +1172,7 @@ namespace Plugin {
             LOGWARN("AVInputImplementation::getSPDInfo");
             vector<uint8_t> spdVect2;
             device::HdmiInput::getInstance().getHDMISPDInfo(id, spdVect2);
-            spdVect = spdVect2; // spdVect must be "unknown" unless we successfully get to this line
+            spdVect = std::move(spdVect2); // spdVect must be "unknown" unless we successfully get to this line
 
             // convert to base64
             uint16_t size = min(spdVect.size(), (size_t)numeric_limits<uint16_t>::max());
@@ -1219,7 +1219,7 @@ namespace Plugin {
         try {
             vector<uint8_t> spdVect2;
             device::HdmiInput::getInstance().getHDMISPDInfo(id, spdVect2);
-            spdVect = spdVect2; // edidVec must be "unknown" unless we successfully get to this line
+            spdVect = std::move(spdVect2); // edidVec must be "unknown" unless we successfully get to this line
 
             // convert to base64
             uint16_t size = min(spdVect.size(), (size_t)numeric_limits<uint16_t>::max());
