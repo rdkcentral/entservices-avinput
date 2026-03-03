@@ -33,7 +33,7 @@ namespace WPEFramework {
     namespace Plugin {
         class AVInputUtils {
         public:
-            static const int getTypeOfInput(const std::string& type);
+            static int getTypeOfInput(const std::string& type);
             static const std::string& getTypeOfInput(const int type);
 
         private:
