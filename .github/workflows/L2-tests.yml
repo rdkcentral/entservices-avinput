@@ -555,6 +555,7 @@ jobs:
           -I $GITHUB_WORKSPACE/entservices-testframework/Tests/headers/systemservices
           -I $GITHUB_WORKSPACE/entservices-testframework/Tests/headers/systemservices/proc
           -I $GITHUB_WORKSPACE/entservices-deviceanddisplay/helpers
+          -I $GITHUB_WORKSPACE/entservices-avinput/helpers
           -I $GITHUB_WORKSPACE/install/usr/include
           -I $GITHUB_WORKSPACE/install/usr/include/WPEFramework
           -I ./usr/include/libdrm
