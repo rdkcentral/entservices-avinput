@@ -1344,6 +1344,7 @@ namespace Plugin {
         return Core::ERROR_NONE;
     }
 
+
     Core::hresult AVInputImplementation::GetVRRSupport(const string& portId, bool& vrrSupport, bool& success)
     {
         int id;
