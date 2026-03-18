@@ -19,6 +19,7 @@ env:
   AUTOMATICS_UNAME: ${{ secrets.AUTOMATICS_UNAME}}
   AUTOMATICS_PASSCODE: ${{ secrets. AUTOMATICS_PASSCODE}}
   RDK_SERVICES_L1_TEST: "OFF"
+  ENABLE_CACHE: "false"
 
 jobs:
   L1-tests:
@@ -42,7 +43,7 @@ jobs:
         # https://github.com/actions/cache
         # https://docs.github.com/en/rest/actions/cache
         # Modify the key if changing the list.
-        if: ${{ !env.ACT }}
+        if: ${{ !env.ACT && env.ENABLE_CACHE == 'true' }}
         id: cache
         uses: actions/cache@v3
         with:
