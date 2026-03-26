@@ -1091,7 +1091,7 @@ namespace Plugin {
             LOGERR("failed to get supported game features");
         }
 
-	LOGINFO("Exiting ...");
+	    LOGINFO("Exiting ...");
         return result;
     }
 
