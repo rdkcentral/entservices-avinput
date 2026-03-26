@@ -353,6 +353,7 @@ namespace Plugin {
 
         try {
             numberOfInputs = device::HdmiInput::getInstance().getNumberOfInputs();
+			LOGINFO("numberOfInputs %u", numberOfInputs);
         } catch (...) {
             LOGERR("Exception caught");
             success = false;
@@ -370,6 +371,7 @@ namespace Plugin {
         
         try {
             currentVideoMode = device::HdmiInput::getInstance().getCurrentVideoMode();
+			LOGINFO("currentVideoMode %s", currentVideoMode.c_str());
         } catch (...) {
             LOGERR("Exception caught");
             success = false;
@@ -561,6 +563,7 @@ namespace Plugin {
         std::list<WPEFramework::Exchange::IAVInput::InputDevice> inputDeviceList;
         success = false;
 
+		LOGINFO("Entering...");
         try {
             switch(AVInputUtils::getTypeOfInput(typeOfInput)) {
                 case INPUT_TYPE_INT_ALL: {
@@ -589,6 +592,7 @@ namespace Plugin {
             success = true;
         }
 
+		LOGINFO("Exiting...");
         return result;
     }
 
@@ -1138,7 +1142,7 @@ namespace Plugin {
         }
 
         success = true;
-        LOGINFO("Exiting...");
+        LOGINFO("VRR status %s", mode? "True" : "False");
         return Core::ERROR_NONE;
     }
 
@@ -1189,11 +1193,11 @@ namespace Plugin {
         if(success == true)
         {
             currentVRRVideoFrameRate = vrrStatus.vrrAmdfreesyncFramerate_Hz;
+			LOGINFO("currentVRRVideoFrameRate:%2f", currentVRRVideoFrameRate);
         } else {
             LOGERR("GetVRRFrameRate: Failed to get current VRR video frame rate");
         }
 
-        LOGINFO("Exiting ...");
         return success ? Core::ERROR_NONE : Core::ERROR_GENERAL;
     }
 
@@ -1242,7 +1246,7 @@ namespace Plugin {
         }
 
         success = true;
-        LOGINFO("Exiting ...");
+        LOGINFO("HDMISPD:%s", HDMISPD.c_str());
         return Core::ERROR_NONE;
     }
 
@@ -1293,6 +1297,7 @@ namespace Plugin {
                 snprintf(str, sizeof(str), "Packet Type:%02X,Version:%u,Length:%u,vendor name:%s,product des:%s,source info:%02X",
                     pre.pkttype, pre.version, pre.length, pre.vendor_name, pre.product_des, pre.source_info);
                 HDMISPD = str;
+				
             }
         } catch (const device::Exception& err) {
             LOG_DEVICE_EXCEPTION1(std::to_string(id));
@@ -1301,7 +1306,7 @@ namespace Plugin {
         }
 
         success = true;
-        LOGINFO("Exiting...");
+        LOGINFO("HDMISPD:%s",HDMISPD.c_str());
         return Core::ERROR_NONE;
     }
 
@@ -1427,7 +1432,6 @@ namespace Plugin {
         }
 
         success = true;
-        LOGINFO("Exiting...");
         return Core::ERROR_NONE;
     }
 
@@ -1507,7 +1511,7 @@ namespace Plugin {
             return Core::ERROR_GENERAL;
         }
 
-        LOGINFO("Exiting...");
+        LOGINFO("HdmiCapabilityVersion:%s", HdmiCapabilityVersion.c_str());
         return Core::ERROR_NONE;
     }
 
@@ -1590,7 +1594,7 @@ namespace Plugin {
         }
 
         success = true;
-        LOGINFO("Exiting...");
+        LOGINFO("edidVersion:%s", edidVersion.c_str());
         return Core::ERROR_NONE;
     }
 
