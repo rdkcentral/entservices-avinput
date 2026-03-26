@@ -1098,8 +1098,7 @@ namespace Plugin {
             result = Core::ERROR_GENERAL;
             LOGERR("failed to get supported game features");
         }
-
-	    LOGINFO("Exiting ...");
+        LOGINFO("Exiting ...");
         return result;
     }
 
