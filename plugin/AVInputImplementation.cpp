@@ -338,14 +338,19 @@ namespace Plugin {
 
     Core::hresult AVInputImplementation::ContentProtected(bool& isContentProtected, bool& success)
     {
+        LOGINFO("Entering...");
+
         // "This is the way it's done in Service Manager"
         isContentProtected = true;
         success = true;
+        LOGINFO("Exiting...");
         return Core::ERROR_NONE;
     }
 
     Core::hresult AVInputImplementation::NumberOfInputs(uint32_t& numberOfInputs, bool& success)
     {
+        LOGINFO("Entering...");
+
         try {
             numberOfInputs = device::HdmiInput::getInstance().getNumberOfInputs();
         } catch (...) {
@@ -355,11 +360,14 @@ namespace Plugin {
         }
 
         success = true;
+        LOGINFO("Exiting...");
         return Core::ERROR_NONE;
     }
 
     Core::hresult AVInputImplementation::CurrentVideoMode(string& currentVideoMode, bool& success)
     {
+        LOGINFO("Entering ...");
+        
         try {
             currentVideoMode = device::HdmiInput::getInstance().getCurrentVideoMode();
         } catch (...) {
@@ -369,11 +377,15 @@ namespace Plugin {
         }
 
         success = true;
+        LOGINFO("Exiting...");
         return Core::ERROR_NONE;
     }
     
     Core::hresult AVInputImplementation::StartInput(const string& portId, const string& typeOfInput, const bool requestAudioMix, const int plane, const bool topMost, SuccessResult& successResult)
     {
+        LOGINFO("StartInput called with portId[%s] typeOfInput[%s] requestAudioMix[%s] plane[%d] topMost[%s]", 
+                portId.c_str(), typeOfInput.c_str(), requestAudioMix ? "true" : "false", plane, topMost ? "true" : "false");
+        
         int id;
 
         try {
@@ -413,11 +425,14 @@ namespace Plugin {
         }
 
         successResult.success = true;
+        LOGINFO("Exiting...");
         return Core::ERROR_NONE;
     }
 
     Core::hresult AVInputImplementation::StopInput(const string& typeOfInput, SuccessResult& successResult)
     {
+        LOGINFO("StopInput called with typeOfInput[%s]", typeOfInput.c_str());
+        
         Core::hresult ret = Core::ERROR_NONE;
         successResult.success = true;
 
@@ -450,11 +465,15 @@ namespace Plugin {
             ret = Core::ERROR_GENERAL;
         }
 
+        LOGINFO("Exiting...");
         return ret;
     }
 
     Core::hresult AVInputImplementation::SetVideoRectangle(const uint16_t x, const uint16_t y, const uint16_t w, const uint16_t h, const string& typeOfInput, SuccessResult& successResult)
     {
+        LOGINFO("SetVideoRectangle called with x[%u] y[%u] w[%u] h[%u] typeOfInput[%s]", 
+                x, y, w, h, typeOfInput.c_str());
+        
         try {
             switch(AVInputUtils::getTypeOfInput(typeOfInput)) {
                 case INPUT_TYPE_INT_HDMI: {
@@ -467,15 +486,18 @@ namespace Plugin {
                 }
                 default: {
                     successResult.success = false;
+                    LOGERR("failed to set video rectangle");
                     return Core::ERROR_GENERAL;
                 }
             }
         } catch(...) {
             successResult.success = false;
+            LOGERR("failed to set video rectangle");
             return Core::ERROR_GENERAL;
         }
 
         successResult.success = true;
+        LOGINFO("Exiting...");
         return Core::ERROR_NONE;
     }
 
@@ -568,6 +590,8 @@ namespace Plugin {
 
     Core::hresult AVInputImplementation::WriteEDID(const string& portId, const string& message, SuccessResult& successResult)
     {
+        LOGINFO("WriteEDID called with portId[%s] message[%s]", portId.c_str(), message.c_str());
+        
         try {
 		    stoi(portId);
         } catch (const std::exception& err) {
@@ -578,11 +602,14 @@ namespace Plugin {
 
         // TODO: This wasn't implemented in the original code, do we want to implement it?
         successResult.success = true;
+        LOGINFO("Exiting ...");
         return Core::ERROR_NONE;
     }
 
     Core::hresult AVInputImplementation::ReadEDID(const string& portId, string& EDID, bool& success)
     {
+        LOGINFO("ReadEDID called with portId[%s]", portId.c_str());
+        
         int id;
 
         try {
@@ -622,6 +649,7 @@ namespace Plugin {
         }
 
         success = true;
+        LOGINFO("Exiting ...");
         return Core::ERROR_NONE;
     }
 
@@ -1041,6 +1069,8 @@ namespace Plugin {
 
     Core::hresult AVInputImplementation::GetSupportedGameFeatures(IStringIterator*& features, bool& success)
     {
+        LOGINFO("Entering ...");
+        
         Core::hresult result = Core::ERROR_NONE;
         success = true;
         features = nullptr;
@@ -1058,13 +1088,17 @@ namespace Plugin {
         } else {
             success = false;
             result = Core::ERROR_GENERAL;
+            LOGERR("failed to get supported game features");
         }
 
+	LOGINFO("Exiting ...");
         return result;
     }
 
     Core::hresult AVInputImplementation::GetGameFeatureStatus(const string& portId, const string& gameFeature, bool& mode, bool& success)
     {
+        LOGINFO("AVInputImplementation::GetGameFeatureStatus called with portId[%s] gameFeature[%s]", portId.c_str(), gameFeature.c_str());
+        
         int id;
 
         try {
@@ -1100,6 +1134,7 @@ namespace Plugin {
         }
 
         success = true;
+        LOGINFO("Exiting...");
         return Core::ERROR_NONE;
     }
 
@@ -1131,6 +1166,8 @@ namespace Plugin {
 
     Core::hresult AVInputImplementation::GetVRRFrameRate(const string& portId, double& currentVRRVideoFrameRate, bool& success)
     {
+        LOGINFO("GetVRRFrameRate called with portId[%s]", portId.c_str());
+        
         int id;
 
         try {
@@ -1148,14 +1185,17 @@ namespace Plugin {
         if(success == true)
         {
             currentVRRVideoFrameRate = vrrStatus.vrrAmdfreesyncFramerate_Hz;
-        }
+        } else {
+            LOGERR("GetVRRFrameRate: Failed to get current VRRvideoframerate");
+	}
 
+        LOGINFO("Exiting ...");
         return success ? Core::ERROR_NONE : Core::ERROR_GENERAL;
     }
 
     Core::hresult AVInputImplementation::GetRawSPD(const string& portId, string& HDMISPD, bool& success)
     {
-        LOGINFO("AVInputImplementation::GetRawSPD");
+        LOGINFO("GetRawSPD called with portId[%s]", portId.c_str());
 
         int id;
 
@@ -1198,11 +1238,14 @@ namespace Plugin {
         }
 
         success = true;
+        LOGINFO("Exiting ...")
         return Core::ERROR_NONE;
     }
 
     Core::hresult AVInputImplementation::GetSPD(const string& portId, string& HDMISPD, bool& success)
     {
+        LOGINFO("GetSPD called with portId[%s]", portId.c_str());
+        
         int id;
 
         try {
@@ -1254,11 +1297,14 @@ namespace Plugin {
         }
 
         success = true;
+        LOGINFO("Exiting...");
         return Core::ERROR_NONE;
     }
 
     Core::hresult AVInputImplementation::SetMixerLevels(const int primaryVolume, const int inputVolume, SuccessResult& successResult)
     {
+        LOGINFO("SetMixerLevels called with primaryVolume[%d] inputVolume[%d]", primaryVolume, inputVolume);
+        
         if( (primaryVolume >=0) && (inputVolume >=0) ) {
                 m_primVolume = primaryVolume;
                 m_inputVolume = inputVolume;
@@ -1289,11 +1335,14 @@ namespace Plugin {
 
         isAudioBalanceSet = true;
         successResult.success = true;
+        LOGINFO("Exiting...");
         return Core::ERROR_NONE;
     }
 
     Core::hresult AVInputImplementation::SetEdid2AllmSupport(const string& portId, const bool allmSupport, SuccessResult& successResult)
     {
+        LOGINFO("SetEdid2AllmSupport called with portId[%s] allmSupport[%s]", portId.c_str(), allmSupport ? "true" : "false");
+        
         int id;
 
         try {
@@ -1314,11 +1363,14 @@ namespace Plugin {
         }
 
         successResult.success = true;
+        LOGINFO("Exiting...");
         return Core::ERROR_NONE;
     }
 
     Core::hresult AVInputImplementation::GetEdid2AllmSupport(const string& portId, bool& allmSupport, bool& success)
     {
+        LOGINFO("GetEdid2AllmSupport called with portId[%s]", portId.c_str());
+        
         int id;
 
         try {
@@ -1341,11 +1393,14 @@ namespace Plugin {
         }
 
         success = true;
+        LOGINFO("Exiting...");
         return Core::ERROR_NONE;
     }
 
     Core::hresult AVInputImplementation::GetVRRSupport(const string& portId, bool& vrrSupport, bool& success)
     {
+        LOGINFO("GetVRRSupport called with portId[%s]", portId.c_str());
+        
         int id;
 
         try {
@@ -1368,11 +1423,14 @@ namespace Plugin {
         }
 
         success = true;
+        LOGINFO("Exiting...");
         return Core::ERROR_NONE;
     }
 
     Core::hresult AVInputImplementation::SetVRRSupport(const string& portId, const bool vrrSupport, SuccessResult& successResult)
     {
+        LOGINFO("SetVRRSupport called with portId[%s] vrrSupport[%s]", portId.c_str(), vrrSupport ? "true" : "false");
+        
         int id;
 
         try {
@@ -1393,11 +1451,14 @@ namespace Plugin {
         }
 
         successResult.success = true;
+        LOGINFO("Exiting...");
         return Core::ERROR_NONE;
     }
 
     Core::hresult AVInputImplementation::GetHdmiVersion(const string& portId, string& HdmiCapabilityVersion, bool& success)
     {
+        LOGINFO("GetHdmiVersion called with portId[%s]", portId.c_str());
+        
         int id;
 
         try {
@@ -1442,11 +1503,14 @@ namespace Plugin {
             return Core::ERROR_GENERAL;
         }
 
+        LOGINFO("Exiting...");
         return Core::ERROR_NONE;
     }
 
     Core::hresult AVInputImplementation::SetEdidVersion(const string& portId, const string& edidVersion, SuccessResult& successResult)
     {
+        LOGINFO("SetEdidVersion called with portId[%s] edidVersion[%s]", portId.c_str(), edidVersion.c_str());
+        
         int id;
 
         try {
@@ -1479,11 +1543,14 @@ namespace Plugin {
         }
 
         successResult.success = true;
+        LOGINFO("Exiting ...");
         return Core::ERROR_NONE;
     }
 
     Core::hresult AVInputImplementation::GetEdidVersion(const string& portId, string& edidVersion, bool& success)
     {
+        LOGINFO("GetEdidVersion called with portId[%s]", portId.c_str());
+        
         int id;
 
         try {
@@ -1514,10 +1581,12 @@ namespace Plugin {
             break;
         default:
             success = false;
+            LOGERR("failed to get EDID version");
             return Core::ERROR_GENERAL;
         }
 
         success = true;
+        LOGINFO("Exiting...");
         return Core::ERROR_NONE;
     }
 
