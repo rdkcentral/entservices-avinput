@@ -472,7 +472,11 @@ namespace Plugin {
     Core::hresult AVInputImplementation::SetVideoRectangle(const uint16_t x, const uint16_t y, const uint16_t w, const uint16_t h, const string& typeOfInput, SuccessResult& successResult)
     {
         LOGINFO("SetVideoRectangle called with x[%u] y[%u] w[%u] h[%u] typeOfInput[%s]", 
-                x, y, w, h, typeOfInput.c_str());
+                static_cast<unsigned>(x),
+                static_cast<unsigned>(y),
+                static_cast<unsigned>(w),
+                static_cast<unsigned>(h),
+                typeOfInput.c_str());
         
         try {
             switch(AVInputUtils::getTypeOfInput(typeOfInput)) {
