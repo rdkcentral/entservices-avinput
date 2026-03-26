@@ -343,7 +343,7 @@ namespace Plugin {
         // "This is the way it's done in Service Manager"
         isContentProtected = true;
         success = true;
-        LOGINFO("Exiting...");
+        LOGINFO("isContentProtected: %s", isContentProtected ? "true" : "false");
         return Core::ERROR_NONE;
     }
 
