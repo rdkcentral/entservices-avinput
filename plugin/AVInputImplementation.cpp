@@ -1238,7 +1238,7 @@ namespace Plugin {
         }
 
         success = true;
-        LOGINFO("Exiting ...")
+        LOGINFO("Exiting ...");
         return Core::ERROR_NONE;
     }
 
