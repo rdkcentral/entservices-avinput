@@ -594,7 +594,7 @@ namespace Plugin {
 
     Core::hresult AVInputImplementation::WriteEDID(const string& portId, const string& message, SuccessResult& successResult)
     {
-        LOGINFO("WriteEDID called with portId[%s] message[%s]", portId.c_str(), message.c_str());
+        LOGINFO("WriteEDID called with portId[%s], EDID length[%zu]", portId.c_str(), message.size());
         
         try {
 		    stoi(portId);
