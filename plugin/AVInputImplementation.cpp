@@ -1190,8 +1190,8 @@ namespace Plugin {
         {
             currentVRRVideoFrameRate = vrrStatus.vrrAmdfreesyncFramerate_Hz;
         } else {
-            LOGERR("GetVRRFrameRate: Failed to get current VRRvideoframerate");
-	}
+            LOGERR("GetVRRFrameRate: Failed to get current VRR video frame rate");
+        }
 
         LOGINFO("Exiting ...");
         return success ? Core::ERROR_NONE : Core::ERROR_GENERAL;
