@@ -552,7 +552,7 @@ namespace Plugin {
         std::list<WPEFramework::Exchange::IAVInput::InputDevice> inputDeviceList;
         success = false;
 
-	     try {
+	    try {
             switch(AVInputUtils::getTypeOfInput(typeOfInput)) {
                 case INPUT_TYPE_INT_ALL: {
                     result = getInputDevices(INPUT_TYPE_HDMI, inputDeviceList);
