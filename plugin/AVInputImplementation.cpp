@@ -1433,7 +1433,6 @@ namespace Plugin {
         }
 
         successResult.success = true;
-        LOGINFO("Exiting...");
         return Core::ERROR_NONE;
     }
 
