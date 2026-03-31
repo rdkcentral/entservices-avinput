@@ -1219,7 +1219,7 @@ namespace Plugin {
     }
 
     Core::hresult AVInputImplementation::GetSPD(const string& portId, string& HDMISPD, bool& success)
-    {       
+    {
         int id;
 
         try {
