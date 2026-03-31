@@ -1523,7 +1523,7 @@ namespace Plugin {
         }
 
         successResult.success = true;
-        LOGINFO("Exiting ...");
+        LOGINFO("SetEdidVersion succeeded for portId[%s] edidVersion[%s]", portId.c_str(), edidVersion.c_str());
         return Core::ERROR_NONE;
     }
 
