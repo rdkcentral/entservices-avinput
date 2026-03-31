@@ -1174,9 +1174,10 @@ namespace Plugin {
 
     Core::hresult AVInputImplementation::GetRawSPD(const string& portId, string& HDMISPD, bool& success)
     {
+		LOGINFO("AVInputImplementation::GetRawSPD");
         int id;
-        LOGINFO("AVInputImplementation::GetRawSPD");
-       try {
+        
+        try {
 		    id = stoi(portId);
         } catch (const std::exception& err) {
             LOGERR("GetRawSPD: Invalid paramater: portId: %s ", portId.c_str());
