@@ -601,9 +601,7 @@ namespace Plugin {
     }
 
     Core::hresult AVInputImplementation::ReadEDID(const string& portId, string& EDID, bool& success)
-    {
-        LOGINFO("ReadEDID called with portId[%s]", portId.c_str());
-        
+    {  
         int id;
 
         try {
@@ -629,7 +627,7 @@ namespace Plugin {
                 return Core::ERROR_GENERAL;
             }
 
-            LOGWARN("AVInputImplementation::readEDID size:%d edidVec.size:%zu", size, edidVec.size());
+            LOGWARN("AVInputImplementation::readEDID size:%d edidVec.size:%zu for portId[%s]", size, edidVec.size(), portId.c_str());
             if (edidVec.size() > (size_t)numeric_limits<uint16_t>::max()) {
                 LOGERR("Size too large to use ToString base64 wpe api");
                 success = false;
