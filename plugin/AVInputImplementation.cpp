@@ -1313,7 +1313,7 @@ namespace Plugin {
     }
 
     Core::hresult AVInputImplementation::SetEdid2AllmSupport(const string& portId, const bool allmSupport, SuccessResult& successResult)
-    {       
+    {
         int id;
 
         try {
