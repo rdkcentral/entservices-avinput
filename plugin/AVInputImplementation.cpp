@@ -416,7 +416,7 @@ namespace Plugin {
         }
 
         successResult.success = true;
-		LOGINFO("StartInput: portId[%s] typeOfInput[%s] requestAudioMix[%s] plane[%d] topMost[%s]", 
+        LOGINFO("StartInput: portId[%s] typeOfInput[%s] requestAudioMix[%s] plane[%d] topMost[%s]", 
                 portId.c_str(), typeOfInput.c_str(), requestAudioMix ? "true" : "false", plane, topMost ? "true" : "false");
         return Core::ERROR_NONE;
     }
