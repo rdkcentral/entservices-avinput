@@ -1176,7 +1176,7 @@ namespace Plugin {
     {
        int id;
 
-        try {
+       try {
 		    id = stoi(portId);
         } catch (const std::exception& err) {
             LOGERR("GetRawSPD: Invalid paramater: portId: %s ", portId.c_str());
