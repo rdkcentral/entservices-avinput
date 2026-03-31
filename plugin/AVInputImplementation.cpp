@@ -580,7 +580,7 @@ namespace Plugin {
     }
 
     Core::hresult AVInputImplementation::WriteEDID(const string& portId, const string& message, SuccessResult& successResult)
-    {       
+    {
         try {
 		    stoi(portId);
         } catch (const std::exception& err) {
