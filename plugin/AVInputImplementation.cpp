@@ -1353,7 +1353,7 @@ namespace Plugin {
 
         try {
             device::HdmiInput::getInstance().getEdid2AllmSupport(id, &allmSupport);
-            LOGINFO("AVInput - allmSupport for portId [%s] is %d for ", portId.c_str(), allmSupport);
+            LOGINFO("AVInput - allmSupport for portId[%s] is %d", portId.c_str(), allmSupport);
         } catch (const device::Exception& err) {
             LOG_DEVICE_EXCEPTION1(std::to_string(id));
             success = false;
