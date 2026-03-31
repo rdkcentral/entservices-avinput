@@ -459,7 +459,7 @@ namespace Plugin {
     }
 
     Core::hresult AVInputImplementation::SetVideoRectangle(const uint16_t x, const uint16_t y, const uint16_t w, const uint16_t h, const string& typeOfInput, SuccessResult& successResult)
-    {       
+    {
         try {
             switch(AVInputUtils::getTypeOfInput(typeOfInput)) {
                 case INPUT_TYPE_INT_HDMI: {
