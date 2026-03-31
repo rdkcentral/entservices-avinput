@@ -580,7 +580,7 @@ namespace Plugin {
             success = true;
         }
 
-		return result;
+        return result;
     }
 
     Core::hresult AVInputImplementation::WriteEDID(const string& portId, const string& message, SuccessResult& successResult)
