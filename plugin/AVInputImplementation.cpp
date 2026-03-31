@@ -641,7 +641,6 @@ namespace Plugin {
         }
 
         success = true;
-        
         return Core::ERROR_NONE;
     }
 
