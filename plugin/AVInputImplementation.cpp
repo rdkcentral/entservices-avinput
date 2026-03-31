@@ -1115,7 +1115,7 @@ namespace Plugin {
         }
 
         success = true;
-        LOGINFO("VRR status for portId[%s] & gameFeature[%s] is %s", portId.c_str(), gameFeature.c_str(),  mode ? "true" : "false");
+        LOGINFO("Game feature status for portId[%s] & gameFeature[%s] is %s", portId.c_str(), gameFeature.c_str(),  mode ? "true" : "false");
         return Core::ERROR_NONE;
     }
 
