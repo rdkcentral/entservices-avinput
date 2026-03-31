@@ -49,7 +49,7 @@ namespace Plugin {
 
         m_primVolume = DEFAULT_PRIM_VOL_LEVEL;
         m_inputVolume = DEFAULT_INPUT_VOL_LEVEL;
-        m_currentVrrType = dsVRR_NONE;
+        m_currentVrrType = dsVRR_NONE;OGINFO("edidVersion:%s", edidVersion.c_str());
         
         AVInputImplementation::_instance = this;
     }
@@ -416,7 +416,7 @@ namespace Plugin {
         }
 
         successResult.success = true;
-		LOGINFO("Started Input of portId[%s] typeOfInput[%s] requestAudioMix[%s] plane[%d] topMost[%s]", 
+		LOGINFO("StartInput: portId[%s] typeOfInput[%s] requestAudioMix[%s] plane[%d] topMost[%s]", 
                 portId.c_str(), typeOfInput.c_str(), requestAudioMix ? "true" : "false", plane, topMost ? "true" : "false");
         return Core::ERROR_NONE;
     }
