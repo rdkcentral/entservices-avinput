@@ -473,13 +473,13 @@ namespace Plugin {
                 }
                 default: {
                     successResult.success = false;
-                    LOGERR("failed to set video rectangle");
+                    LOGERR("Invalid input type '%s' passed to SetVideoRectangle", typeOfInput.c_str());
                     return Core::ERROR_GENERAL;
                 }
             }
         } catch(...) {
             successResult.success = false;
-            LOGERR("failed to set video rectangle");
+            LOGERR("Exception caught while setting video rectangle for input type '%s'", typeOfInput.c_str());
             return Core::ERROR_GENERAL;
         }
 
