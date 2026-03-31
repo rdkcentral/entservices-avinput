@@ -1366,8 +1366,7 @@ namespace Plugin {
     }
 
     Core::hresult AVInputImplementation::GetVRRSupport(const string& portId, bool& vrrSupport, bool& success)
-    {
-            
+    {   
         int id;
 
         try {
@@ -1394,7 +1393,7 @@ namespace Plugin {
     }
 
     Core::hresult AVInputImplementation::SetVRRSupport(const string& portId, const bool vrrSupport, SuccessResult& successResult)
-    {   
+    {
         int id;
 
         try {
@@ -1419,7 +1418,7 @@ namespace Plugin {
     }
 
     Core::hresult AVInputImplementation::GetHdmiVersion(const string& portId, string& HdmiCapabilityVersion, bool& success)
-    {      
+    {
         int id;
 
         try {
