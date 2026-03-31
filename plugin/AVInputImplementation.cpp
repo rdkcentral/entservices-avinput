@@ -320,7 +320,7 @@ namespace Plugin {
                     (*index)->AviContentTypeUpdate(id, aviContentType);
                     ++index;
                 }
-            }
+LOGINFO("AVInputImplementation::GetRawSPD");            }
             break;
         }
 
@@ -1419,8 +1419,7 @@ namespace Plugin {
     }
 
     Core::hresult AVInputImplementation::GetHdmiVersion(const string& portId, string& HdmiCapabilityVersion, bool& success)
-    {
-             
+    {      
         int id;
 
         try {
