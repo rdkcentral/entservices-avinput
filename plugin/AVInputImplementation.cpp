@@ -320,7 +320,7 @@ namespace Plugin {
                     (*index)->AviContentTypeUpdate(id, aviContentType);
                     ++index;
                 }
-LOGINFO("AVInputImplementation::GetRawSPD");            }
+            }
             break;
         }
 
