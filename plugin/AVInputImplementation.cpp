@@ -1277,7 +1277,7 @@ namespace Plugin {
     }
 
     Core::hresult AVInputImplementation::SetMixerLevels(const int primaryVolume, const int inputVolume, SuccessResult& successResult)
-    {       
+    {
         if( (primaryVolume >=0) && (inputVolume >=0) ) {
                 m_primVolume = primaryVolume;
                 m_inputVolume = inputVolume;
