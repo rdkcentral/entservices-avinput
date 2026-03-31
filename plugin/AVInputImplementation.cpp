@@ -349,7 +349,7 @@ namespace Plugin {
     {
         try {
             numberOfInputs = device::HdmiInput::getInstance().getNumberOfInputs();
-			LOGINFO("numberOfInputs %u", numberOfInputs);
+	        LOGINFO("numberOfInputs %u", numberOfInputs);
         } catch (...) {
             LOGERR("Exception caught");
             success = false;
