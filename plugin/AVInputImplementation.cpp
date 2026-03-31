@@ -1170,7 +1170,7 @@ namespace Plugin {
         if(success == true)
         {
             currentVRRVideoFrameRate = vrrStatus.vrrAmdfreesyncFramerate_Hz;
-			LOGINFO("VRR FrameRate for portId[%s] is :%2f", portId.c_str(), currentVRRVideoFrameRate);
+			LOGINFO("VRR FrameRate for portId[%s] is :%.2f", portId.c_str(), currentVRRVideoFrameRate);
         } else {
             LOGERR("GetVRRFrameRate: Failed to get current VRR video frame rate");
         }
