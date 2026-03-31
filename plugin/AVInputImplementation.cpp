@@ -1074,14 +1074,14 @@ namespace Plugin {
             result = Core::ERROR_GENERAL;
             LOGERR("failed to get supported game features");
         }
-        
+
         return result;
     }
 
     Core::hresult AVInputImplementation::GetGameFeatureStatus(const string& portId, const string& gameFeature, bool& mode, bool& success)
     {
         int id;
-		
+
         try {
 		    id = stoi(portId);
         } catch (const std::exception& err) {
