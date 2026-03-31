@@ -364,7 +364,7 @@ namespace Plugin {
     {
         try {
             currentVideoMode = device::HdmiInput::getInstance().getCurrentVideoMode();
-			LOGINFO("currentVideoMode %s", currentVideoMode.c_str());
+		    LOGINFO("currentVideoMode %s", currentVideoMode.c_str());
         } catch (...) {
             LOGERR("Exception caught");
             success = false;
