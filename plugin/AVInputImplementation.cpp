@@ -1398,7 +1398,7 @@ namespace Plugin {
 
         try {
             device::HdmiInput::getInstance().getVRRSupport(id, &vrrSupport);
-            LOGINFO("AVInput - getVRRSupport for portid[%s] is:%d", portId.c_str(), vrrSupport);
+            LOGINFO("AVInput - getVRRSupport for portId[%s] is:%d", portId.c_str(), vrrSupport);
         } catch (const device::Exception& err) {
             LOG_DEVICE_EXCEPTION1(std::to_string(id));
             success = false;
