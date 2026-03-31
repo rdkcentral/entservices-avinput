@@ -1307,7 +1307,6 @@ namespace Plugin {
 
         isAudioBalanceSet = true;
         successResult.success = true;
-        
         return Core::ERROR_NONE;
     }
 
