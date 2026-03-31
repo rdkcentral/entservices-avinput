@@ -376,7 +376,7 @@ namespace Plugin {
     }
     
     Core::hresult AVInputImplementation::StartInput(const string& portId, const string& typeOfInput, const bool requestAudioMix, const int plane, const bool topMost, SuccessResult& successResult)
-    {   
+    {
         int id;
 
         try {
