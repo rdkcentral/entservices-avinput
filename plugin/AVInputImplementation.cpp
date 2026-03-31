@@ -601,7 +601,7 @@ namespace Plugin {
     }
 
     Core::hresult AVInputImplementation::ReadEDID(const string& portId, string& EDID, bool& success)
-    {  
+    {
         int id;
 
         try {
