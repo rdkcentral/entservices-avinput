@@ -1066,7 +1066,7 @@ namespace Plugin {
         std::vector<std::string> supportedFeatures;
         try {
             device::HdmiInput::getInstance().getSupportedGameFeatures(supportedFeatures);
-		} catch (const device::Exception& err) {
+        } catch (const device::Exception& err) {
             LOG_DEVICE_EXCEPTION0();
             success = false;
             result = Core::ERROR_GENERAL;
