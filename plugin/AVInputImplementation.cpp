@@ -591,7 +591,7 @@ namespace Plugin {
 
         // TODO: This wasn't implemented in the original code, do we want to implement it?
         successResult.success = true;
-		LOGINFO("Success in Writing EDID with portId[%s], EDID length[%zu]", portId.c_str(), message.size());
+		LOGINFO("WriteEDID with portId[%s], EDID length[%zu]", portId.c_str(), message.size());
         return Core::ERROR_NONE;
     }
 
