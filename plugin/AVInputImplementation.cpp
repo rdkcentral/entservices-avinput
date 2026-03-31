@@ -361,8 +361,7 @@ namespace Plugin {
     }
 
     Core::hresult AVInputImplementation::CurrentVideoMode(string& currentVideoMode, bool& success)
-    {
-            
+    { 
         try {
             currentVideoMode = device::HdmiInput::getInstance().getCurrentVideoMode();
 			LOGINFO("currentVideoMode %s", currentVideoMode.c_str());
