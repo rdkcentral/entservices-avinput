@@ -347,7 +347,7 @@ namespace Plugin {
 
     Core::hresult AVInputImplementation::NumberOfInputs(uint32_t& numberOfInputs, bool& success)
     {
-       try {
+        try {
             numberOfInputs = device::HdmiInput::getInstance().getNumberOfInputs();
 			LOGINFO("numberOfInputs %u", numberOfInputs);
         } catch (...) {
