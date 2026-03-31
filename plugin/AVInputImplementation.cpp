@@ -482,7 +482,7 @@ namespace Plugin {
             return Core::ERROR_GENERAL;
         }
 
-		LOGINFO("Successfully Set VideoRectangle with x[%u] y[%u] w[%u] h[%u] typeOfInput[%s]", 
+        LOGINFO("Successfully Set VideoRectangle with x[%u] y[%u] w[%u] h[%u] typeOfInput[%s]", 
                 static_cast<unsigned>(x),
                 static_cast<unsigned>(y),
                 static_cast<unsigned>(w),
