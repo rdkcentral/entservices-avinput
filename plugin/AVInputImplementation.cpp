@@ -1243,7 +1243,8 @@ namespace Plugin {
             // convert to base64
             uint16_t size = min(spdVect.size(), (size_t)numeric_limits<uint16_t>::max());
 
-            LOGWARN("AVInputImplementation::GetSPD size:%d spdVec.size:%zu for portId:%s", size, spdVect.size(), portId.c_str());
+            LOGWARN("AVInputImplementation::GetSPD size:%u spdVec.size:%zu for portId:%s",
+                static_cast<unsigned int>(size), spdVect.size(), portId.c_str());
 
             if (spdVect.size() > (size_t)numeric_limits<uint16_t>::max()) {
                 LOGERR("Size too large to use ToString base64 wpe api");
