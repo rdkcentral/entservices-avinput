@@ -422,7 +422,7 @@ namespace Plugin {
     }
 
     Core::hresult AVInputImplementation::StopInput(const string& typeOfInput, SuccessResult& successResult)
-    {      
+    {
         Core::hresult ret = Core::ERROR_NONE;
         successResult.success = true;
 
