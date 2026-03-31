@@ -1506,7 +1506,7 @@ namespace Plugin {
     }
 
     Core::hresult AVInputImplementation::GetEdidVersion(const string& portId, string& edidVersion, bool& success)
-    {       
+    {
         int id;
 
         try {
