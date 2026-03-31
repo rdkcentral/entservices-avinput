@@ -49,7 +49,7 @@ namespace Plugin {
 
         m_primVolume = DEFAULT_PRIM_VOL_LEVEL;
         m_inputVolume = DEFAULT_INPUT_VOL_LEVEL;
-        m_currentVrrType = dsVRR_NONE;OGINFO("edidVersion:%s", edidVersion.c_str());
+        m_currentVrrType = dsVRR_NONE;
         
         AVInputImplementation::_instance = this;
     }
