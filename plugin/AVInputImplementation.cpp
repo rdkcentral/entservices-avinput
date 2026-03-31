@@ -1273,7 +1273,6 @@ namespace Plugin {
                 snprintf(str, sizeof(str), "Packet Type:%02X,Version:%u,Length:%u,vendor name:%s,product des:%s,source info:%02X",
                     pre.pkttype, pre.version, pre.length, pre.vendor_name, pre.product_des, pre.source_info);
                 HDMISPD = str;
-				
             }
         } catch (const device::Exception& err) {
             LOG_DEVICE_EXCEPTION1(std::to_string(id));
