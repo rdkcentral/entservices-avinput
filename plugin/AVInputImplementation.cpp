@@ -1281,7 +1281,7 @@ namespace Plugin {
         }
 
         success = true;
-        LOGINFO("HDMISPD:%s",HDMISPD.c_str());
+        LOGINFO("HDMISPD:%s", HDMISPD.c_str());
         return Core::ERROR_NONE;
     }
 
