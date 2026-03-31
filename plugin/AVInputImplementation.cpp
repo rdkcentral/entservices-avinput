@@ -338,8 +338,6 @@ namespace Plugin {
 
     Core::hresult AVInputImplementation::ContentProtected(bool& isContentProtected, bool& success)
     {
-        LOGINFO("Entering...");
-
         // "This is the way it's done in Service Manager"
         isContentProtected = true;
         success = true;
@@ -349,9 +347,7 @@ namespace Plugin {
 
     Core::hresult AVInputImplementation::NumberOfInputs(uint32_t& numberOfInputs, bool& success)
     {
-        LOGINFO("Entering...");
-
-        try {
+       try {
             numberOfInputs = device::HdmiInput::getInstance().getNumberOfInputs();
 			LOGINFO("numberOfInputs %u", numberOfInputs);
         } catch (...) {
@@ -361,14 +357,12 @@ namespace Plugin {
         }
 
         success = true;
-        LOGINFO("Exiting...");
         return Core::ERROR_NONE;
     }
 
     Core::hresult AVInputImplementation::CurrentVideoMode(string& currentVideoMode, bool& success)
     {
-        LOGINFO("Entering ...");
-        
+            
         try {
             currentVideoMode = device::HdmiInput::getInstance().getCurrentVideoMode();
 			LOGINFO("currentVideoMode %s", currentVideoMode.c_str());
@@ -379,7 +373,6 @@ namespace Plugin {
         }
 
         success = true;
-        LOGINFO("Exiting...");
         return Core::ERROR_NONE;
     }
     
@@ -427,7 +420,7 @@ namespace Plugin {
         }
 
         successResult.success = true;
-        LOGINFO("Exiting...");
+        
         return Core::ERROR_NONE;
     }
 
@@ -467,7 +460,6 @@ namespace Plugin {
             ret = Core::ERROR_GENERAL;
         }
 
-        LOGINFO("Exiting...");
         return ret;
     }
 
@@ -503,7 +495,6 @@ namespace Plugin {
         }
 
         successResult.success = true;
-        LOGINFO("Exiting...");
         return Core::ERROR_NONE;
     }
 
@@ -563,8 +554,7 @@ namespace Plugin {
         std::list<WPEFramework::Exchange::IAVInput::InputDevice> inputDeviceList;
         success = false;
 
-		LOGINFO("Entering...");
-        try {
+		try {
             switch(AVInputUtils::getTypeOfInput(typeOfInput)) {
                 case INPUT_TYPE_INT_ALL: {
                     result = getInputDevices(INPUT_TYPE_HDMI, inputDeviceList);
@@ -592,8 +582,7 @@ namespace Plugin {
             success = true;
         }
 
-		LOGINFO("Exiting...");
-        return result;
+		return result;
     }
 
     Core::hresult AVInputImplementation::WriteEDID(const string& portId, const string& message, SuccessResult& successResult)
@@ -610,7 +599,6 @@ namespace Plugin {
 
         // TODO: This wasn't implemented in the original code, do we want to implement it?
         successResult.success = true;
-        LOGINFO("Exiting ...");
         return Core::ERROR_NONE;
     }
 
@@ -657,7 +645,7 @@ namespace Plugin {
         }
 
         success = true;
-        LOGINFO("Exiting ...");
+        
         return Core::ERROR_NONE;
     }
 
@@ -1077,15 +1065,14 @@ namespace Plugin {
 
     Core::hresult AVInputImplementation::GetSupportedGameFeatures(IStringIterator*& features, bool& success)
     {
-        LOGINFO("Entering ...");
-        
+              
         Core::hresult result = Core::ERROR_NONE;
         success = true;
         features = nullptr;
         std::vector<std::string> supportedFeatures;
         try {
             device::HdmiInput::getInstance().getSupportedGameFeatures(supportedFeatures);
-        } catch (const device::Exception& err) {
+		} catch (const device::Exception& err) {
             LOG_DEVICE_EXCEPTION0();
             success = false;
             result = Core::ERROR_GENERAL;
@@ -1098,14 +1085,13 @@ namespace Plugin {
             result = Core::ERROR_GENERAL;
             LOGERR("failed to get supported game features");
         }
-        LOGINFO("Exiting ...");
+        
         return result;
     }
 
     Core::hresult AVInputImplementation::GetGameFeatureStatus(const string& portId, const string& gameFeature, bool& mode, bool& success)
     {
-        LOGINFO("AVInputImplementation::GetGameFeatureStatus called with portId[%s] gameFeature[%s]", portId.c_str(), gameFeature.c_str());
-        
+               
         int id;
 
         try {
@@ -1141,7 +1127,7 @@ namespace Plugin {
         }
 
         success = true;
-        LOGINFO("VRR status %s", mode? "True" : "False");
+        LOGINFO("VRR status for portId[%s] & gameFeature[%s] is %s", portId.c_str(), gameFeature.c_str(),  mode? "True" : "False");
         return Core::ERROR_NONE;
     }
 
@@ -1173,8 +1159,7 @@ namespace Plugin {
 
     Core::hresult AVInputImplementation::GetVRRFrameRate(const string& portId, double& currentVRRVideoFrameRate, bool& success)
     {
-        LOGINFO("GetVRRFrameRate called with portId[%s]", portId.c_str());
-        
+          
         int id;
 
         try {
@@ -1192,7 +1177,7 @@ namespace Plugin {
         if(success == true)
         {
             currentVRRVideoFrameRate = vrrStatus.vrrAmdfreesyncFramerate_Hz;
-			LOGINFO("currentVRRVideoFrameRate:%2f", currentVRRVideoFrameRate);
+			LOGINFO("VRR FrameRate for portId[%s] is :%2f", portId.c_str(), currentVRRVideoFrameRate);
         } else {
             LOGERR("GetVRRFrameRate: Failed to get current VRR video frame rate");
         }
@@ -1245,7 +1230,6 @@ namespace Plugin {
         }
 
         success = true;
-        LOGINFO("HDMISPD:%s", HDMISPD.c_str());
         return Core::ERROR_NONE;
     }
 
@@ -1343,7 +1327,7 @@ namespace Plugin {
 
         isAudioBalanceSet = true;
         successResult.success = true;
-        LOGINFO("Exiting...");
+        
         return Core::ERROR_NONE;
     }
 
@@ -1371,7 +1355,7 @@ namespace Plugin {
         }
 
         successResult.success = true;
-        LOGINFO("Exiting...");
+        
         return Core::ERROR_NONE;
     }
 
@@ -1401,14 +1385,13 @@ namespace Plugin {
         }
 
         success = true;
-        LOGINFO("Exiting...");
+        
         return Core::ERROR_NONE;
     }
 
     Core::hresult AVInputImplementation::GetVRRSupport(const string& portId, bool& vrrSupport, bool& success)
     {
-        LOGINFO("GetVRRSupport called with portId[%s]", portId.c_str());
-        
+            
         int id;
 
         try {
@@ -1423,7 +1406,7 @@ namespace Plugin {
 
         try {
             device::HdmiInput::getInstance().getVRRSupport(id, &vrrSupport);
-            LOGINFO("AVInput - getVRRSupport:%d", vrrSupport);
+            LOGINFO("AVInput - getVRRSupport for portid[%s] is:%d", portId.c_str(), vrrSupport);
         } catch (const device::Exception& err) {
             LOG_DEVICE_EXCEPTION1(std::to_string(id));
             success = false;
@@ -1464,8 +1447,7 @@ namespace Plugin {
 
     Core::hresult AVInputImplementation::GetHdmiVersion(const string& portId, string& HdmiCapabilityVersion, bool& success)
     {
-        LOGINFO("GetHdmiVersion called with portId[%s]", portId.c_str());
-        
+             
         int id;
 
         try {
@@ -1510,7 +1492,7 @@ namespace Plugin {
             return Core::ERROR_GENERAL;
         }
 
-        LOGINFO("HdmiCapabilityVersion:%s", HdmiCapabilityVersion.c_str());
+        LOGINFO("Hdmi Version for portId[%s] is:%s", portId.c_str(), HdmiCapabilityVersion.c_str());
         return Core::ERROR_NONE;
     }
 
