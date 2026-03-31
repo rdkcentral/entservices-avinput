@@ -454,7 +454,7 @@ namespace Plugin {
             successResult.success = false;
             ret = Core::ERROR_GENERAL;
         }
-        LOGINFO("StoppedInput for type[%s]", typeOfInput.c_str());
+        LOGINFO("StopInput: typeOfInput[%s]", typeOfInput.c_str());
         return ret;
     }
 
