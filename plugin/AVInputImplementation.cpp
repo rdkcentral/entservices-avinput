@@ -1079,7 +1079,7 @@ namespace Plugin {
     }
 
     Core::hresult AVInputImplementation::GetGameFeatureStatus(const string& portId, const string& gameFeature, bool& mode, bool& success)
-    {      
+    {
         int id;
 
         try {
