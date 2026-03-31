@@ -1470,7 +1470,7 @@ namespace Plugin {
 
     Core::hresult AVInputImplementation::SetEdidVersion(const string& portId, const string& edidVersion, SuccessResult& successResult)
     {
-       int id;
+        int id;
 
         try {
 		    id = stoi(portId);
