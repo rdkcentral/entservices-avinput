@@ -1300,7 +1300,7 @@ namespace Plugin {
         try {
             device::Host::getInstance().setAudioMixerLevels(dsAUDIO_INPUT_PRIMARY, primaryVolume);
             device::Host::getInstance().setAudioMixerLevels(dsAUDIO_INPUT_SYSTEM, inputVolume);
-			LOGINFO("Setting MixerLevels: primaryVolume[%d] inputVolume[%d]", primaryVolume, inputVolume);
+            LOGINFO("Setting MixerLevels: primaryVolume[%d] inputVolume[%d]", primaryVolume, inputVolume);
         } catch (...) {
             LOGWARN("Not setting SoC volume !!!\n");
             successResult.success = false;
