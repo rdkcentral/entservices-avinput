@@ -1059,7 +1059,7 @@ namespace Plugin {
     }
 
     Core::hresult AVInputImplementation::GetSupportedGameFeatures(IStringIterator*& features, bool& success)
-    {      
+    {    
         Core::hresult result = Core::ERROR_NONE;
         success = true;
         features = nullptr;
