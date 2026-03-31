@@ -425,7 +425,8 @@ namespace Plugin {
     {
         Core::hresult ret = Core::ERROR_NONE;
         successResult.success = true;
-
+        LOGINFO("StopInput: typeOfInput[%s]", typeOfInput.c_str());
+		
         try {
             planeType = -1;
             if (isAudioBalanceSet) {
@@ -454,7 +455,7 @@ namespace Plugin {
             successResult.success = false;
             ret = Core::ERROR_GENERAL;
         }
-        LOGINFO("StopInput: typeOfInput[%s]", typeOfInput.c_str());
+        
         return ret;
     }
 
