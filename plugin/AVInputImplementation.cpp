@@ -1081,6 +1081,7 @@ namespace Plugin {
     Core::hresult AVInputImplementation::GetGameFeatureStatus(const string& portId, const string& gameFeature, bool& mode, bool& success)
     {
         int id;
+		
         try {
 		    id = stoi(portId);
         } catch (const std::exception& err) {
@@ -1146,7 +1147,6 @@ namespace Plugin {
 
     Core::hresult AVInputImplementation::GetVRRFrameRate(const string& portId, double& currentVRRVideoFrameRate, bool& success)
     {
-          
         int id;
 
         try {
