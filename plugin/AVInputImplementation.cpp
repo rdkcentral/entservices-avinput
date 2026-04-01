@@ -1070,7 +1070,7 @@ namespace Plugin {
 
         if (!supportedFeatures.empty() && result == Core::ERROR_NONE) {
             features = Core::Service<RPC::IteratorType<IStringIterator>>::Create<IStringIterator>(supportedFeatures);
-            LOGINFO("GetSupportedGameFeatures: %lu", static_cast<unsigned long>(supportedFeatures.size()));
+            LOGINFO("GetSupportedGameFeatures: %zu", supportedFeatures.size());
         } else {
             success = false;
             result = Core::ERROR_GENERAL;
