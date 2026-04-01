@@ -623,7 +623,7 @@ namespace Plugin {
                 return Core::ERROR_GENERAL;
             }
 
-            LOGWARN("AVInputImplementation::readEDID size:%d edidVec.size:%zu for portId[%s]", size, edidVec.size(), portId.c_str());
+            LOGWARN("AVInputImplementation::readEDID size:%u edidVec.size:%zu for portId[%s]", static_cast<unsigned int>(size), edidVec.size(), portId.c_str());
             if (edidVec.size() > (size_t)numeric_limits<uint16_t>::max()) {
                 LOGERR("Size too large to use ToString base64 wpe api");
                 success = false;
