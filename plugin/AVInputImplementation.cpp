@@ -624,7 +624,7 @@ namespace Plugin {
                 return Core::ERROR_GENERAL;
             }
 
-            LOGWARN("AVInputImplementation::readEDID size:%d edidVec.size:%zu for portId[%s]", size, edidVec.size(), portId.c_str());
+            LOGWARN("AVInputImplementation::readEDID size:%u edidVec.size:%zu for portId[%s]", static_cast<unsigned int>(size), edidVec.size(), portId.c_str());
             if (edidVec.size() > (size_t)numeric_limits<uint16_t>::max()) {
                 LOGERR("Size too large to use ToString base64 wpe api");
                 success = false;
@@ -1071,7 +1071,7 @@ namespace Plugin {
 
         if (!supportedFeatures.empty() && result == Core::ERROR_NONE) {
             features = Core::Service<RPC::IteratorType<IStringIterator>>::Create<IStringIterator>(supportedFeatures);
-            LOGINFO("GetSupportedGameFeatures: %u", static_cast<unsigned int>(supportedFeatures.size()));
+            LOGINFO("GetSupportedGameFeatures: %zu", supportedFeatures.size());
         } else {
             success = false;
             result = Core::ERROR_GENERAL;
@@ -1166,7 +1166,7 @@ namespace Plugin {
         if(success == true)
         {
             currentVRRVideoFrameRate = vrrStatus.vrrAmdfreesyncFramerate_Hz;
-			LOGINFO("VRR FrameRate for portId[%s] is :%.2f", portId.c_str(), currentVRRVideoFrameRate);
+            LOGINFO("VRR FrameRate for portId[%s] is :%.2f", portId.c_str(), currentVRRVideoFrameRate);
         } else {
             LOGERR("GetVRRFrameRate: Failed to get current VRR video frame rate");
         }
@@ -1364,7 +1364,6 @@ namespace Plugin {
         }
 
         success = true;
-        
         return Core::ERROR_NONE;
     }
 
