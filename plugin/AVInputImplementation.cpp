@@ -630,7 +630,7 @@ namespace Plugin {
                 return Core::ERROR_GENERAL;
             }
             Core::ToString((uint8_t*)&edidVec[0], size, true, EDID);
-        } catch (const device::Exception& err) {
+        } catch (...) {
             LOG_DEVICE_EXCEPTION1(std::to_string(id));
             success = false;
             return Core::ERROR_GENERAL;
