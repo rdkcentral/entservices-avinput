@@ -599,7 +599,7 @@ namespace Plugin {
     Core::hresult AVInputImplementation::ReadEDID(const string& portId, string& EDID, bool& success)
     {
         int id;
-
+        LOGERR("ReadEDID: In predebug");
         try {
 		    id = stoi(portId);
         } catch (const std::exception& err) {
@@ -609,7 +609,7 @@ namespace Plugin {
         }
 
         vector<uint8_t> edidVec({ 'u', 'n', 'k', 'n', 'o', 'w', 'n' });
-
+        LOGERR("ReadEDID: edidvec predebug");
         try {
             vector<uint8_t> edidVec2;
             device::HdmiInput::getInstance().getEDIDBytesInfo(id, edidVec2);
