@@ -612,9 +612,11 @@ namespace Plugin {
         LOGERR("ReadEDID: edidvec predebug");
         try {
             vector<uint8_t> edidVec2;
+			LOGERR("getEDIDBytesInfo predebug");
             device::HdmiInput::getInstance().getEDIDBytesInfo(id, edidVec2);
+			LOGERR("getEDIDBytesInfo predebug out");
             edidVec = std::move(edidVec2); // edidVec must be "unknown" unless we successfully get to this line
-
+             
             // convert to base64
             uint16_t size = min(edidVec.size(), (size_t)numeric_limits<uint16_t>::max());
 
