@@ -126,7 +126,6 @@ jobs:
           repository: rdkcentral/entservices-testframework
           path: entservices-testframework
           ref: 1.0.1
-          token: ${{ secrets.RDKCM_RDKE }}
 
       - name: Checkout entservices-avinput
         if: ${{ inputs.caller_source == 'local' }}
