@@ -36,6 +36,7 @@
 static bool isAudioBalanceSet = false;
 static int planeType = 0;
 
+
 using namespace std;
 
 namespace WPEFramework {
