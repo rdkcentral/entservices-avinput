@@ -135,7 +135,7 @@ namespace Plugin {
     Core::hresult AVInputImplementation::RegisterDevicesChangedNotification(Exchange::IAVInput::IDevicesChangedNotification* notification)
     {
         Core::hresult errorCode = Register(_devicesChangedNotifications, notification);
-        LOGINFO("IDevicesChangedNotification %p, errorCode: %u", notification, errorCode);
+        LOGINFO("IDevicesChangedNotification %p, errorCode: %u", errorCode);
         return errorCode;
     }
 
