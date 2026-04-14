@@ -1523,20 +1523,21 @@ namespace Plugin {
 
     Core::hresult AVInputImplementation::GetARCPortId(string& portId, bool& success)
     {
+		success = false;
+		portId.clear();
+		
         int id = -1;
         dsError_t error = device::HdmiInput::getInstance().getHDMIARCPortId(id);
 
         if (dsERR_NONE == error) {
             LOGINFO("HDMI ARC port ID HdmiArcPortID[%d]", id);
             portId = std::to_string(id);
+			success = true;
+			return Core::ERROR_NONE;
         } else {
             LOGWARN("getHDMIARCPortId failed");
-            success = false;
             return Core::ERROR_GENERAL;
-        }
-
-        success = true;
-        return Core::ERROR_NONE;
+        } 
     }
 
 } // namespace Plugin
