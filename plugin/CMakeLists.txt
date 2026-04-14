@@ -41,6 +41,8 @@ set_target_properties(${MODULE_NAME} PROPERTIES
 
 target_compile_definitions(${MODULE_NAME} PRIVATE MODULE_NAME=Plugin_${PLUGIN_NAME})
 
+target_compile_options(${MODULE_NAME} PRIVATE -Wno-error)
+
 find_package(DS)
 find_package(IARMBus)
 
