@@ -21,6 +21,7 @@
 #include <curl/curl.h>
 #include <fstream>
 #include <time.h>
+#include <utility>
 
 #include "UtilsJsonRpc.h"
 
@@ -42,7 +43,7 @@ namespace Plugin {
     SERVICE_REGISTRATION(AVInputImplementation, 1, 0);
     AVInputImplementation* AVInputImplementation::_instance = nullptr;
 
-    AVInputImplementation::AVInputImplementation() : _adminLock(), _registeredDsEventHandlers(false)
+    AVInputImplementation::AVInputImplementation() : _adminLock(), _service(nullptr), _registeredDsEventHandlers(false)
     {
         LOGINFO("Create AVInputImplementation Instance");
 
@@ -340,6 +341,7 @@ namespace Plugin {
         // "This is the way it's done in Service Manager"
         isContentProtected = true;
         success = true;
+        LOGINFO("isContentProtected: %s", isContentProtected ? "true" : "false");
         return Core::ERROR_NONE;
     }
 
@@ -347,6 +349,7 @@ namespace Plugin {
     {
         try {
             numberOfInputs = device::HdmiInput::getInstance().getNumberOfInputs();
+	        LOGINFO("numberOfInputs %u", numberOfInputs);
         } catch (...) {
             LOGERR("Exception caught");
             success = false;
@@ -361,6 +364,7 @@ namespace Plugin {
     {
         try {
             currentVideoMode = device::HdmiInput::getInstance().getCurrentVideoMode();
+		    LOGINFO("currentVideoMode %s", currentVideoMode.c_str());
         } catch (...) {
             LOGERR("Exception caught");
             success = false;
@@ -412,6 +416,8 @@ namespace Plugin {
         }
 
         successResult.success = true;
+        LOGINFO("StartInput: portId[%s] typeOfInput[%s] requestAudioMix[%s] plane[%d] topMost[%s]", 
+                portId.c_str(), typeOfInput.c_str(), requestAudioMix ? "true" : "false", plane, topMost ? "true" : "false");
         return Core::ERROR_NONE;
     }
 
@@ -420,6 +426,7 @@ namespace Plugin {
         Core::hresult ret = Core::ERROR_NONE;
         successResult.success = true;
 
+        LOGINFO("StopInput: typeOfInput %s", typeOfInput.c_str());
         try {
             planeType = -1;
             if (isAudioBalanceSet) {
@@ -466,14 +473,22 @@ namespace Plugin {
                 }
                 default: {
                     successResult.success = false;
+                    LOGERR("Invalid input type '%s' passed to SetVideoRectangle", typeOfInput.c_str());
                     return Core::ERROR_GENERAL;
                 }
             }
         } catch(...) {
             successResult.success = false;
+            LOGERR("Exception caught while setting video rectangle for input type '%s'", typeOfInput.c_str());
             return Core::ERROR_GENERAL;
         }
 
+        LOGINFO("Successfully Set VideoRectangle with x[%u] y[%u] w[%u] h[%u] typeOfInput[%s]", 
+                static_cast<unsigned>(x),
+                static_cast<unsigned>(y),
+                static_cast<unsigned>(w),
+                static_cast<unsigned>(h),
+                typeOfInput.c_str());
         successResult.success = true;
         return Core::ERROR_NONE;
     }
@@ -517,7 +532,7 @@ namespace Plugin {
                     }
                     inputDevice.locator = locator.str();
                     LOGINFO("getInputDevices id %d, locator=[%s], connected=[%d]", i, inputDevice.locator.c_str(), inputDevice.connected);
-                    inputDeviceList.push_back(inputDevice);
+                    inputDeviceList.push_back(std::move(inputDevice));
                 }
             }
         } catch (const std::exception& e) {
@@ -577,6 +592,7 @@ namespace Plugin {
 
         // TODO: This wasn't implemented in the original code, do we want to implement it?
         successResult.success = true;
+		LOGINFO("WriteEDID with portId[%s], EDID length[%zu]", portId.c_str(), message.size());
         return Core::ERROR_NONE;
     }
 
@@ -597,7 +613,7 @@ namespace Plugin {
         try {
             vector<uint8_t> edidVec2;
             device::HdmiInput::getInstance().getEDIDBytesInfo(id, edidVec2);
-            edidVec = edidVec2; // edidVec must be "unknown" unless we successfully get to this line
+            edidVec = std::move(edidVec2); // edidVec must be "unknown" unless we successfully get to this line
 
             // convert to base64
             uint16_t size = min(edidVec.size(), (size_t)numeric_limits<uint16_t>::max());
@@ -607,7 +623,7 @@ namespace Plugin {
                 return Core::ERROR_GENERAL;
             }
 
-            LOGWARN("AVInputImplementation::readEDID size:%d edidVec.size:%zu", size, edidVec.size());
+            LOGWARN("AVInputImplementation::readEDID size:%u edidVec.size:%zu for portId[%s]", static_cast<unsigned int>(size), edidVec.size(), portId.c_str());
             if (edidVec.size() > (size_t)numeric_limits<uint16_t>::max()) {
                 LOGERR("Size too large to use ToString base64 wpe api");
                 success = false;
@@ -1054,6 +1070,7 @@ namespace Plugin {
 
         if (!supportedFeatures.empty() && result == Core::ERROR_NONE) {
             features = Core::Service<RPC::IteratorType<IStringIterator>>::Create<IStringIterator>(supportedFeatures);
+            LOGINFO("GetSupportedGameFeatures: %zu", supportedFeatures.size());
         } else {
             success = false;
             result = Core::ERROR_GENERAL;
@@ -1099,6 +1116,7 @@ namespace Plugin {
         }
 
         success = true;
+        LOGINFO("Game feature status for portId[%s] & gameFeature[%s] is %s", portId.c_str(), gameFeature.c_str(),  mode ? "true" : "false");
         return Core::ERROR_NONE;
     }
 
@@ -1147,6 +1165,9 @@ namespace Plugin {
         if(success == true)
         {
             currentVRRVideoFrameRate = vrrStatus.vrrAmdfreesyncFramerate_Hz;
+            LOGINFO("VRR FrameRate for portId[%s] is :%.2f", portId.c_str(), currentVRRVideoFrameRate);
+        } else {
+            LOGERR("GetVRRFrameRate: Failed to get current VRR video frame rate");
         }
 
         return success ? Core::ERROR_NONE : Core::ERROR_GENERAL;
@@ -1172,12 +1193,12 @@ namespace Plugin {
             LOGWARN("AVInputImplementation::getSPDInfo");
             vector<uint8_t> spdVect2;
             device::HdmiInput::getInstance().getHDMISPDInfo(id, spdVect2);
-            spdVect = spdVect2; // spdVect must be "unknown" unless we successfully get to this line
+            spdVect = std::move(spdVect2); // spdVect must be "unknown" unless we successfully get to this line
 
             // convert to base64
             uint16_t size = min(spdVect.size(), (size_t)numeric_limits<uint16_t>::max());
 
-            LOGWARN("AVInputImplementation::getSPD size:%d spdVec.size:%zu", size, spdVect.size());
+            LOGWARN("AVInputImplementation::getSPD size:%d spdVec.size:%zu for portId: %s ", size, spdVect.size(), portId.c_str());
 
             if (spdVect.size() > (size_t)numeric_limits<uint16_t>::max()) {
                 LOGERR("Size too large to use ToString base64 wpe api");
@@ -1219,12 +1240,13 @@ namespace Plugin {
         try {
             vector<uint8_t> spdVect2;
             device::HdmiInput::getInstance().getHDMISPDInfo(id, spdVect2);
-            spdVect = spdVect2; // edidVec must be "unknown" unless we successfully get to this line
+            spdVect = std::move(spdVect2); // edidVec must be "unknown" unless we successfully get to this line
 
             // convert to base64
             uint16_t size = min(spdVect.size(), (size_t)numeric_limits<uint16_t>::max());
 
-            LOGWARN("AVInputImplementation::GetSPD size:%d spdVec.size:%zu", size, spdVect.size());
+            LOGWARN("AVInputImplementation::GetSPD size:%u spdVec.size:%zu for portId:%s",
+                static_cast<unsigned int>(size), spdVect.size(), portId.c_str());
 
             if (spdVect.size() > (size_t)numeric_limits<uint16_t>::max()) {
                 LOGERR("Size too large to use ToString base64 wpe api");
@@ -1280,6 +1302,7 @@ namespace Plugin {
         try {
             device::Host::getInstance().setAudioMixerLevels(dsAUDIO_INPUT_PRIMARY, primaryVolume);
             device::Host::getInstance().setAudioMixerLevels(dsAUDIO_INPUT_SYSTEM, inputVolume);
+            LOGINFO("Setting MixerLevels: primaryVolume[%d] inputVolume[%d]", primaryVolume, inputVolume);
         } catch (...) {
             LOGWARN("Not setting SoC volume !!!\n");
             successResult.success = false;
@@ -1305,7 +1328,7 @@ namespace Plugin {
 
         try {
             device::HdmiInput::getInstance().setEdid2AllmSupport(id, allmSupport);
-            LOGWARN("AVInput -  allmsupport:%d", allmSupport);
+            LOGWARN("AVInput -  allmsupport:%d portId:%s ", allmSupport, portId.c_str());
         } catch (const device::Exception& err) {
             LOG_DEVICE_EXCEPTION1(std::to_string(id));
             successResult.success = false;
@@ -1332,7 +1355,7 @@ namespace Plugin {
 
         try {
             device::HdmiInput::getInstance().getEdid2AllmSupport(id, &allmSupport);
-            LOGINFO("AVInput - getEdid2AllmSupport:%d", allmSupport);
+            LOGINFO("AVInput - allmSupport for portId[%s] is %d", portId.c_str(), allmSupport);
         } catch (const device::Exception& err) {
             LOG_DEVICE_EXCEPTION1(std::to_string(id));
             success = false;
@@ -1359,7 +1382,7 @@ namespace Plugin {
 
         try {
             device::HdmiInput::getInstance().getVRRSupport(id, &vrrSupport);
-            LOGINFO("AVInput - getVRRSupport:%d", vrrSupport);
+            LOGINFO("AVInput - getVRRSupport for portId[%s] is:%d", portId.c_str(), vrrSupport);
         } catch (const device::Exception& err) {
             LOG_DEVICE_EXCEPTION1(std::to_string(id));
             success = false;
@@ -1384,7 +1407,7 @@ namespace Plugin {
 
         try {
             device::HdmiInput::getInstance().setVRRSupport(id, vrrSupport);
-            LOGWARN("AVInput -  vrrSupport:%d", vrrSupport);
+            LOGWARN("AVInput - vrrSupport:%d for portId[%s]", vrrSupport, portId.c_str());
         } catch (const device::Exception& err) {
             LOG_DEVICE_EXCEPTION1(std::to_string(id));
             successResult.success = false;
@@ -1411,7 +1434,7 @@ namespace Plugin {
 
         try {
             device::HdmiInput::getInstance().getHdmiVersion(id, &hdmiCapVersion);
-            LOGWARN("AVInputImplementation::GetHdmiVersion Hdmi Version:%d", hdmiCapVersion);
+            LOGWARN("AVInputImplementation::GetHdmiVersion Hdmi Version:%d for portId[%s]", hdmiCapVersion, portId.c_str());
         } catch (const device::Exception& err) {
             LOG_DEVICE_EXCEPTION1(std::to_string(id));
             success = false;
@@ -1470,7 +1493,7 @@ namespace Plugin {
 
         try {
             device::HdmiInput::getInstance().setEdidVersion(id, edidVer);
-            LOGWARN("AVInputImplementation::setEdidVersion EDID Version: %s", edidVersion.c_str());
+            LOGWARN("AVInputImplementation::setEdidVersion EDID Version: %s for portId[%s]", edidVersion.c_str(), portId.c_str());
         } catch (const device::Exception& err) {
             LOG_DEVICE_EXCEPTION1(std::to_string(id));
             successResult.success = false;
@@ -1497,7 +1520,7 @@ namespace Plugin {
 
         try {
             device::HdmiInput::getInstance().getEdidVersion(id, &version);
-            LOGWARN("AVInputImplementation::getEdidVersion EDID Version:%d", version);
+            LOGWARN("AVInputImplementation::getEdidVersion EDID Version:%d for portId[%s]", version, portId.c_str());
         } catch (const device::Exception& err) {
             LOG_DEVICE_EXCEPTION1(std::to_string(id));
             success = false;
@@ -1513,6 +1536,7 @@ namespace Plugin {
             break;
         default:
             success = false;
+            LOGERR("failed to get EDID version");
             return Core::ERROR_GENERAL;
         }
 

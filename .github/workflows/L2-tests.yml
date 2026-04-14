@@ -114,8 +114,7 @@ jobs:
         with:
           repository: rdkcentral/entservices-testframework
           path: entservices-testframework
-          ref: develop
-          token: ${{ secrets.RDKCM_RDKE }}
+          ref: 1.0.1
 
       - name: Checkout googletest
         if: steps.cache.outputs.cache-hit != 'true'
@@ -152,6 +151,7 @@ jobs:
           patch -p1 < $GITHUB_WORKSPACE/entservices-testframework/patches/error_code_R4_4.patch
           patch -p1 < $GITHUB_WORKSPACE/entservices-testframework/patches/1004-Add-support-for-project-dir.patch
           patch -p1 < $GITHUB_WORKSPACE/entservices-testframework/patches/RDKEMW-733-Add-ENTOS-IDS.patch
+          patch -p1 < $GITHUB_WORKSPACE/entservices-testframework/patches/Increase_Timout_For_L2Tests_Plugin.patch
           cd -
       - name: Build Thunder
         run: >
@@ -178,6 +178,12 @@ jobs:
           path: entservices-apis
           ref: ${{env.INTERFACES_REF}}
           run: rm -rf $GITHUB_WORKSPACE/entservices-apis/jsonrpc/DTV.json
+
+      - name: Apply patches entservices-apis
+        run: |
+          cd $GITHUB_WORKSPACE/entservices-apis
+          patch -p1 < $GITHUB_WORKSPACE/entservices-testframework/patches/add-l2tests-interface.patch
+          cd -
 
       - name: Build entservices-apis
         run: >
@@ -548,6 +554,7 @@ jobs:
           -I $GITHUB_WORKSPACE/entservices-testframework/Tests/headers/systemservices
           -I $GITHUB_WORKSPACE/entservices-testframework/Tests/headers/systemservices/proc
           -I $GITHUB_WORKSPACE/entservices-deviceanddisplay/helpers
+          -I $GITHUB_WORKSPACE/entservices-avinput/helpers
           -I $GITHUB_WORKSPACE/install/usr/include
           -I $GITHUB_WORKSPACE/install/usr/include/WPEFramework
           -I ./usr/include/libdrm
@@ -707,7 +714,7 @@ jobs:
           rm -rf $(pwd)/rdkL2TestResults.json
 
       - name: Run unit tests with valgrind
-        if: ${{ !env.ACT }}
+        if: ${{ !env.ACT && inputs.caller_source != 'testframework' }}
         run: >
           PATH=$GITHUB_WORKSPACE/install/usr/bin:${PATH}
           LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/usr/lib:$GITHUB_WORKSPACE/install/usr/lib/wpeframework/plugins:${LD_LIBRARY_PATH}
@@ -723,7 +730,7 @@ jobs:
           rm -rf $(pwd)/rdkL2TestResults.json
 
       - name: Generate coverage
-        if: ${{ matrix.coverage == 'with-coverage' && !env.ACT }}
+        if: ${{ matrix.coverage == 'with-coverage' && !env.ACT && inputs.caller_source != 'testframework'}}
         run: >
           cp $GITHUB_WORKSPACE/entservices-testframework/Tests/L2Tests/.lcovrc_l2 ~/.lcovrc
           &&
