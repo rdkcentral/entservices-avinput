@@ -1544,5 +1544,24 @@ namespace Plugin {
         return Core::ERROR_NONE;
     }
 
+    Core::hresult AVInputImplementation::GetARCPortId(string& portId, bool& success)
+    {
+		success = false;
+		portId.clear();
+		
+        int id = -1;
+        dsError_t error = device::HdmiInput::getInstance().getHDMIARCPortId(id);
+
+        if (dsERR_NONE == error) {
+            LOGINFO("HDMI ARC port ID HdmiArcPortID[%d]", id);
+            portId = std::to_string(id);
+			success = true;
+			return Core::ERROR_NONE;
+        } else {
+            LOGWARN("getHDMIARCPortId failed");
+            return Core::ERROR_GENERAL;
+        } 
+    }
+
 } // namespace Plugin
 } // namespace WPEFramework
