@@ -351,7 +351,7 @@ namespace Plugin {
         } catch (...) {
             LOGERR("Exception caught");
             success = false;
-            return Core::ERROR_GENERAL;
+            return Core::ERROR_NONE;
         }
 
         success = true;
@@ -365,7 +365,7 @@ namespace Plugin {
         } catch (...) {
             LOGERR("Exception caught");
             success = false;
-            return Core::ERROR_GENERAL;
+            return Core::ERROR_NONE;
         }
 
         success = true;
@@ -381,13 +381,13 @@ namespace Plugin {
         } catch (const std::exception& err) {
             LOGERR("StartInput: Invalid paramater: portId: %s ", portId.c_str());
             successResult.success = false;
-            return Core::ERROR_GENERAL;
+            return Core::ERROR_NONE;
         }
 
         if(plane != 0 && plane != 1 ){
             LOGERR("StartInput: Invalid paramater: plane: %d ", plane);
             successResult.success = false;
-            return Core::ERROR_GENERAL;
+            return Core::ERROR_NONE;
         }
 
         try {
@@ -403,13 +403,13 @@ namespace Plugin {
                 default: {
                     LOGWARN("Invalid input type passed to StartInput");
                     successResult.success = false;
-                    return Core::ERROR_GENERAL;
+                    return Core::ERROR_NONE;
                 }
             }
             planeType = plane;
         } catch(...) {
             successResult.success = false;
-            return Core::ERROR_GENERAL;
+            return Core::ERROR_NONE;
         }
 
         successResult.success = true;
@@ -441,13 +441,13 @@ namespace Plugin {
                 default: {
                     LOGWARN("Invalid input type passed to StopInput");
                     successResult.success = false;
-                    return Core::ERROR_GENERAL;
+                    return Core::ERROR_NONE;
                 }
             }
         } catch(...) {
             LOGWARN("AVInputImplementation::StopInput Failed");
             successResult.success = false;
-            ret = Core::ERROR_GENERAL;
+            ret = Core::ERROR_NONE;
         }
 
         return ret;
@@ -467,12 +467,12 @@ namespace Plugin {
                 }
                 default: {
                     successResult.success = false;
-                    return Core::ERROR_GENERAL;
+                    return Core::ERROR_NONE;
                 }
             }
         } catch(...) {
             successResult.success = false;
-            return Core::ERROR_GENERAL;
+            return Core::ERROR_NONE;
         }
 
         successResult.success = true;
@@ -551,11 +551,11 @@ namespace Plugin {
                 }
                 default: {
                     LOGERR("GetInputDevices: Invalid input type");
-                    return Core::ERROR_GENERAL;
+                    return Core::ERROR_NONE;
                 }
             }
         } catch(...) {
-            return Core::ERROR_GENERAL;
+            return Core::ERROR_NONE;
         }
 
         if(Core::ERROR_NONE == result) {
@@ -573,7 +573,7 @@ namespace Plugin {
         } catch (const std::exception& err) {
             LOGERR("WriteEDID: Invalid paramater: portId: %s ", portId.c_str());
             successResult.success = false;
-            return Core::ERROR_GENERAL;
+            return Core::ERROR_NONE;
         }
 
         // TODO: This wasn't implemented in the original code, do we want to implement it?
@@ -590,7 +590,7 @@ namespace Plugin {
         } catch (const std::exception& err) {
             LOGERR("ReadEDID: Invalid paramater: portId: %s ", portId.c_str());
             success = false;
-            return Core::ERROR_GENERAL;
+            return Core::ERROR_NONE;
         }
 
         vector<uint8_t> edidVec({ 'u', 'n', 'k', 'n', 'o', 'w', 'n' });
@@ -605,20 +605,20 @@ namespace Plugin {
 
             if(0 == size) {
                 success = false;
-                return Core::ERROR_GENERAL;
+                return Core::ERROR_NONE;
             }
 
             LOGWARN("AVInputImplementation::readEDID size:%d edidVec.size:%zu", size, edidVec.size());
             if (edidVec.size() > (size_t)numeric_limits<uint16_t>::max()) {
                 LOGERR("Size too large to use ToString base64 wpe api");
                 success = false;
-                return Core::ERROR_GENERAL;
+                return Core::ERROR_NONE;
             }
             Core::ToString((uint8_t*)&edidVec[0], size, true, EDID);
         } catch (const device::Exception& err) {
             LOG_DEVICE_EXCEPTION1(std::to_string(id));
             success = false;
-            return Core::ERROR_GENERAL;
+            return Core::ERROR_NONE;
         }
 
         success = true;
@@ -1050,14 +1050,14 @@ namespace Plugin {
         } catch (const device::Exception& err) {
             LOG_DEVICE_EXCEPTION0();
             success = false;
-            result = Core::ERROR_GENERAL;
+            result = Core::ERROR_NONE;
         }
 
         if (!supportedFeatures.empty() && result == Core::ERROR_NONE) {
             features = Core::Service<RPC::IteratorType<IStringIterator>>::Create<IStringIterator>(supportedFeatures);
         } else {
             success = false;
-            result = Core::ERROR_GENERAL;
+            result = Core::ERROR_NONE;
         }
 
         return result;
@@ -1072,7 +1072,7 @@ namespace Plugin {
         } catch (const std::exception& err) {
             LOGERR("GetGameFeatureStatus: Invalid paramater: portId: %s ", portId.c_str());
             success = false;
-            return Core::ERROR_GENERAL;
+            return Core::ERROR_NONE;
         }
 
         if (gameFeature == STR_ALLM) {
@@ -1096,7 +1096,7 @@ namespace Plugin {
         } else {
             LOGWARN("AVInputImplementation::GetGameFeatureStatus Unsupported feature: %s", gameFeature.c_str());
             success = false;
-            return Core::ERROR_GENERAL;
+            return Core::ERROR_NONE;
         }
 
         success = true;
@@ -1138,7 +1138,7 @@ namespace Plugin {
         } catch (const std::exception& err) {
             LOGERR("GetVRRFrameRate: Invalid paramater: portId: %s ", portId.c_str());
             success = false;
-            return Core::ERROR_GENERAL;
+            return Core::ERROR_NONE;
         }
 
         dsHdmiInVrrStatus_t vrrStatus;
@@ -1150,7 +1150,7 @@ namespace Plugin {
             currentVRRVideoFrameRate = vrrStatus.vrrAmdfreesyncFramerate_Hz;
         }
 
-        return success ? Core::ERROR_NONE : Core::ERROR_GENERAL;
+        return Core::ERROR_NONE;
     }
 
     Core::hresult AVInputImplementation::GetRawSPD(const string& portId, string& HDMISPD, bool& success)
@@ -1164,7 +1164,7 @@ namespace Plugin {
         } catch (const std::exception& err) {
             LOGERR("GetRawSPD: Invalid paramater: portId: %s ", portId.c_str());
             success = false;
-            return Core::ERROR_GENERAL;
+            return Core::ERROR_NONE;
         }
 
         vector<uint8_t> spdVect({ 'u', 'n', 'k', 'n', 'o', 'w', 'n' });
@@ -1183,7 +1183,7 @@ namespace Plugin {
             if (spdVect.size() > (size_t)numeric_limits<uint16_t>::max()) {
                 LOGERR("Size too large to use ToString base64 wpe api");
                 success = false;
-                return Core::ERROR_GENERAL;
+                return Core::ERROR_NONE;
             }
 
             LOGINFO("------------getSPD: ");
@@ -1194,7 +1194,7 @@ namespace Plugin {
         } catch (const device::Exception& err) {
             LOG_DEVICE_EXCEPTION1(std::to_string(id));
             success = false;
-            return Core::ERROR_GENERAL;
+            return Core::ERROR_NONE;
         }
 
         success = true;
@@ -1210,7 +1210,7 @@ namespace Plugin {
         } catch (const std::exception& err) {
             LOGERR("GetSPD: Invalid paramater: portId: %s ", portId.c_str());
             success = false;
-            return Core::ERROR_GENERAL;
+            return Core::ERROR_NONE;
         }
 
         vector<uint8_t> spdVect({ 'u', 'n', 'k', 'n', 'o', 'w', 'n' });
@@ -1230,7 +1230,7 @@ namespace Plugin {
             if (spdVect.size() > (size_t)numeric_limits<uint16_t>::max()) {
                 LOGERR("Size too large to use ToString base64 wpe api");
                 success = false;
-                return Core::ERROR_GENERAL;
+                return Core::ERROR_NONE;
             }
 
             LOGINFO("------------getSPD: ");
@@ -1250,7 +1250,7 @@ namespace Plugin {
         } catch (const device::Exception& err) {
             LOG_DEVICE_EXCEPTION1(std::to_string(id));
             success = false;
-            return Core::ERROR_GENERAL;
+            return Core::ERROR_NONE;
         }
 
         success = true;
@@ -1265,7 +1265,7 @@ namespace Plugin {
         } else {
             LOGERR("Invalid params\n");
             successResult.success = false;
-            return Core::ERROR_GENERAL;
+            return Core::ERROR_NONE;
         }
 
         if(m_primVolume > MAX_PRIM_VOL_LEVEL) {
@@ -1284,7 +1284,7 @@ namespace Plugin {
         } catch (...) {
             LOGWARN("Not setting SoC volume !!!\n");
             successResult.success = false;
-            return Core::ERROR_GENERAL;
+            return Core::ERROR_NONE;
         }
 
         isAudioBalanceSet = true;
@@ -1301,7 +1301,7 @@ namespace Plugin {
         } catch (const std::exception& err) {
             LOGERR("SetEdid2AllmSupport: Invalid paramater: portId: %s ", portId.c_str());
             successResult.success = false;
-            return Core::ERROR_GENERAL;
+            return Core::ERROR_NONE;
         }
 
         try {
@@ -1310,7 +1310,7 @@ namespace Plugin {
         } catch (const device::Exception& err) {
             LOG_DEVICE_EXCEPTION1(std::to_string(id));
             successResult.success = false;
-            return Core::ERROR_GENERAL;
+            return Core::ERROR_NONE;
         }
 
         successResult.success = true;
@@ -1326,7 +1326,7 @@ namespace Plugin {
         } catch (const std::exception& err) {
             LOGERR("GetEdid2AllmSupport: Invalid paramater: portId: %s ", portId.c_str());
             success = false;
-            return Core::ERROR_GENERAL;
+            return Core::ERROR_NONE;
         }
 
         allmSupport = true;
@@ -1337,7 +1337,7 @@ namespace Plugin {
         } catch (const device::Exception& err) {
             LOG_DEVICE_EXCEPTION1(std::to_string(id));
             success = false;
-            return Core::ERROR_GENERAL;
+            return Core::ERROR_NONE;
         }
 
         success = true;
@@ -1353,7 +1353,7 @@ namespace Plugin {
         } catch (const std::exception& err) {
             LOGERR("GetVRRSupport: Invalid paramater: portId: %s ", portId.c_str());
             success = false;
-            return Core::ERROR_GENERAL;
+            return Core::ERROR_NONE;
         }
 
         vrrSupport = true;
@@ -1364,7 +1364,7 @@ namespace Plugin {
         } catch (const device::Exception& err) {
             LOG_DEVICE_EXCEPTION1(std::to_string(id));
             success = false;
-            return Core::ERROR_GENERAL;
+            return Core::ERROR_NONE;
         }
 
         success = true;
@@ -1380,7 +1380,7 @@ namespace Plugin {
         } catch (const std::exception& err) {
             LOGERR("SetVRRSupport: Invalid paramater: portId: %s ", portId.c_str());
             successResult.success = false;
-            return Core::ERROR_GENERAL;
+            return Core::ERROR_NONE;
         }
 
         try {
@@ -1389,7 +1389,7 @@ namespace Plugin {
         } catch (const device::Exception& err) {
             LOG_DEVICE_EXCEPTION1(std::to_string(id));
             successResult.success = false;
-            return Core::ERROR_GENERAL;
+            return Core::ERROR_NONE;
         }
 
         successResult.success = true;
@@ -1405,7 +1405,7 @@ namespace Plugin {
         } catch (const std::exception& err) {
             LOGERR("GetHdmiVersion: Invalid paramater: portId: %s ", portId.c_str());
             success = false;
-            return Core::ERROR_GENERAL;
+            return Core::ERROR_NONE;
         }
 
         dsHdmiMaxCapabilityVersion_t hdmiCapVersion = HDMI_COMPATIBILITY_VERSION_14;
@@ -1416,7 +1416,7 @@ namespace Plugin {
         } catch (const device::Exception& err) {
             LOG_DEVICE_EXCEPTION1(std::to_string(id));
             success = false;
-            return Core::ERROR_GENERAL;
+            return Core::ERROR_NONE;
         }
 
         switch ((int)hdmiCapVersion) {
@@ -1439,7 +1439,7 @@ namespace Plugin {
 
         if (hdmiCapVersion == HDMI_COMPATIBILITY_VERSION_MAX) {
             success = false;
-            return Core::ERROR_GENERAL;
+            return Core::ERROR_NONE;
         }
 
         return Core::ERROR_NONE;
@@ -1454,7 +1454,7 @@ namespace Plugin {
         } catch (const std::exception& err) {
             LOGERR("SetEdidVersion: Invalid paramater: portId: %s ", portId.c_str());
             successResult.success = false;
-            return Core::ERROR_GENERAL;
+            return Core::ERROR_NONE;
         }
 
         int edidVer = -1;
@@ -1466,7 +1466,7 @@ namespace Plugin {
         } else {
             LOGERR("Invalid EDID Version: %s", edidVersion.c_str());
             successResult.success = false;
-            return Core::ERROR_GENERAL;
+            return Core::ERROR_NONE;
         }
 
         try {
@@ -1475,7 +1475,7 @@ namespace Plugin {
         } catch (const device::Exception& err) {
             LOG_DEVICE_EXCEPTION1(std::to_string(id));
             successResult.success = false;
-            return Core::ERROR_GENERAL;
+            return Core::ERROR_NONE;
         }
 
         successResult.success = true;
@@ -1491,7 +1491,7 @@ namespace Plugin {
         } catch (const std::exception& err) {
             LOGERR("GetEdidVersion: Invalid paramater: portId: %s ", portId.c_str());
             success = false;
-            return Core::ERROR_GENERAL;
+            return Core::ERROR_NONE;
         }
 
         int version = -1;
@@ -1502,7 +1502,7 @@ namespace Plugin {
         } catch (const device::Exception& err) {
             LOG_DEVICE_EXCEPTION1(std::to_string(id));
             success = false;
-            return Core::ERROR_GENERAL;
+            return Core::ERROR_NONE;
         }
 
         switch (version) {
@@ -1514,7 +1514,7 @@ namespace Plugin {
             break;
         default:
             success = false;
-            return Core::ERROR_GENERAL;
+            return Core::ERROR_NONE;
         }
 
         success = true;
