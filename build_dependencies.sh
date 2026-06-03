@@ -42,7 +42,7 @@ git clone --branch R4.4.1 https://github.com/rdkcentral/Thunder.git
 git clone --branch develop https://github.com/rdkcentral/entservices-apis.git
 
 cd ..
-git clone --branch feature/RDKEMW-16743 https://github.com/rdkcentral/entservices-helpers.git
+git clone --branch develop https://github.com/rdkcentral/entservices-helpers.git
 cd "$GITHUB_WORKSPACE"
 
 git clone --branch 1.0.1 https://github.com/rdkcentral/entservices-testframework.git
@@ -108,17 +108,6 @@ cmake --build build/entservices-apis --target install
 
 
 #############################
-# Build entservices-helpers
-echo "======================================================================================"
-echo "building entservices-helpers"
-cmake -G Ninja -S ../entservices-helpers -B build/entservices-helpers \
-    -DEXCEPTIONS_ENABLE=ON \
-    -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/install/usr" \
-    -DCMAKE_MODULE_PATH="$GITHUB_WORKSPACE/install/tools/cmake"
-cmake --build build/entservices-helpers --target install
-
-
-############################
 # generating external headers for AVInput plugin
 cd $GITHUB_WORKSPACE
 cd entservices-testframework/Tests
@@ -143,9 +132,21 @@ echo "Creating required IARM Bus headers"
 touch rdk/iarmbus/libIARM.h
 touch rdk/iarmbus/libIBus.h
 touch rdk/iarmbus/libIBusDaemon.h
+touch tr181api.h
 echo "files created successfully"
 echo "======================================================================================"
 
+# Build entservices-helpers
+echo "======================================================================================"
+echo "building entservices-helpers"
+cmake -G Ninja -S ../entservices-helpers -B build/entservices-helpers \
+    -DEXCEPTIONS_ENABLE=ON \
+    -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/install/usr" \
+    -DCMAKE_MODULE_PATH="$GITHUB_WORKSPACE/install/tools/cmake"
+cmake --build build/entservices-helpers --target install
+
+
+############################
 cd ../../
 
 ls -la ${GITHUB_WORKSPACE}
