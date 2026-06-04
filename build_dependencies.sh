@@ -136,6 +136,7 @@ touch tr181api.h
 echo "files created successfully"
 echo "======================================================================================"
 
+cd $GITHUB_WORKSPACE
 # Build entservices-helpers
 echo "======================================================================================"
 echo "building entservices-helpers"
