@@ -599,7 +599,7 @@ namespace Plugin {
     Core::hresult AVInputImplementation::ReadEDID(const string& portId, string& EDID, bool& success)
     {
         int id;
-
+        LOGERR("ReadEDID: In predebug");
         try {
 		    id = stoi(portId);
         } catch (const std::exception& err) {
@@ -609,12 +609,14 @@ namespace Plugin {
         }
 
         vector<uint8_t> edidVec({ 'u', 'n', 'k', 'n', 'o', 'w', 'n' });
-
+        LOGERR("ReadEDID: edidvec predebug");
         try {
             vector<uint8_t> edidVec2;
+			LOGERR("getEDIDBytesInfo predebug");
             device::HdmiInput::getInstance().getEDIDBytesInfo(id, edidVec2);
+			LOGERR("getEDIDBytesInfo predebug out");
             edidVec = std::move(edidVec2); // edidVec must be "unknown" unless we successfully get to this line
-
+             
             // convert to base64
             uint16_t size = min(edidVec.size(), (size_t)numeric_limits<uint16_t>::max());
 
@@ -631,7 +633,11 @@ namespace Plugin {
             }
             Core::ToString((uint8_t*)&edidVec[0], size, true, EDID);
         } catch (const device::Exception& err) {
-            LOG_DEVICE_EXCEPTION1(std::to_string(id));
+			LOG_DEVICE_EXCEPTION1(std::to_string(id));
+            success = false;
+            return Core::ERROR_GENERAL;
+		} catch (...) {
+            LOGERR("ReadEDID: Caught exception");
             success = false;
             return Core::ERROR_NONE;
         }
