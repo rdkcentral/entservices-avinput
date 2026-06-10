@@ -31,7 +31,7 @@ set (TEST_LIB
     ${NAMESPACE}Plugins::${NAMESPACE}Plugins
 )
 
-set (TEST_INC ../../helpers)
+set (TEST_INC)
 
 #########################################################################################
 # add_plugin_test_ex: Macro to add plugin tests, it will append to TEST_SRC, TEST_INC,
@@ -102,7 +102,7 @@ endmacro()
 
 
 # PLUGIN_AVINPUT
-set (AVINPUT_INC ../../plugin ../../helpers)
+set (AVINPUT_INC ../../plugin ${CMAKE_SOURCE_DIR}/../entservices-helpers/helpers)
 set (AVINPUT_LIBS ${NAMESPACE}AVInput)
 add_plugin_test_ex(PLUGIN_AVINPUT tests/test_AVInput.cpp "${AVINPUT_INC}" "${AVINPUT_LIBS}")
 
