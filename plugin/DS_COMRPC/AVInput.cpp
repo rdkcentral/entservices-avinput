@@ -54,13 +54,13 @@ namespace Plugin {
         , _avInput(nullptr)
         , _avInputNotification(this)
     {
-        Register<JsonObject, JsonObject>(_T(AVINPUT_METHOD_GET_INPUT_DEVICES), &AVInput::getInputDevicesWrapper, this);
+        PluginHost::JSONRPC::Register<JsonObject, JsonObject>(_T(AVINPUT_METHOD_GET_INPUT_DEVICES), &AVInput::getInputDevicesWrapper, this);
         SYSLOG(Logging::Startup, (_T("AVInput Constructor")));
     }
 
     AVInput::~AVInput()
     {
-        Unregister(_T(AVINPUT_METHOD_GET_INPUT_DEVICES));
+        PluginHost::JSONRPC::Unregister(_T(AVINPUT_METHOD_GET_INPUT_DEVICES));
         SYSLOG(Logging::Shutdown, (string(_T("AVInput Destructor"))));
     }
 
@@ -184,20 +184,22 @@ namespace Plugin {
                     int32_t num = 0;
                     hdmiIn->GetHDMIInNumberOfInputs(num);
 
-                    // Collect per-port connection status via GetHDMIInStatus iterator
+                    // Collect per-port connection status via GetHDMIInStatus iterator.
+                    // HDMIPortConnectionStatus has only isPortConnected (no id field) —
+                    // iterate in order; position in iterator == port index.
                     Exchange::IDeviceSettingsHDMIIn::HDMIInStatus hdmiStatus{};
                     Exchange::IDeviceSettingsHDMIIn::IHDMIInPortConnectionStatusIterator* portIter = nullptr;
                     hdmiIn->GetHDMIInStatus(hdmiStatus, portIter);
 
-                    // Build a connected-status array indexed by port number
                     std::vector<bool> connected(static_cast<size_t>(num), false);
                     if (portIter != nullptr) {
                         Exchange::IDeviceSettingsHDMIIn::HDMIPortConnectionStatus portStatus{};
+                        int portIdx = 0;
                         while (portIter->Next(portStatus)) {
-                            int portIdx = static_cast<int>(portStatus.id);
-                            if (portIdx >= 0 && portIdx < num) {
-                                connected[static_cast<size_t>(portIdx)] = portStatus.connected;
+                            if (portIdx < num) {
+                                connected[static_cast<size_t>(portIdx)] = portStatus.isPortConnected;
                             }
+                            portIdx++;
                         }
                         portIter->Release();
                     }
@@ -289,24 +291,22 @@ namespace Plugin {
 
     void AVInput::Notification::OnDevicesChanged(Exchange::IAVInput::IInputDeviceIterator* const devices)
     {
-        LOGINFO("OnDevicesChanged\n");
-        if (devices) {
-            JsonArray params;
-            Exchange::IAVInput::IInputDevice* device = nullptr;
-            while (devices->Next(device) == true) {
-                if (device != nullptr) {
-                    JsonObject deviceInfo;
-                    deviceInfo["id"] = device->Id();
-                    deviceInfo["locator"] = device->Locator();
-                    deviceInfo["connected"] = device->Connected();
-                    params.Add(deviceInfo);
-                    device->Release();
-                }
+        if (devices != nullptr)
+        {
+            Exchange::IAVInput::InputDevice resultItem{};
+            Core::JSON::Container eventPayload;
+
+            if(devices->Count() == 0) {
+                JsonObject params;
+                JsonArray emptyArray;
+                params["devices"] = emptyArray;
+                _parent.Notify(_T("onDevicesChanged"), params);
+                return;
             }
-            _parent.Notify(_T("onDevicesChanged"), params);
-        } else {
-            JsonObject eventPayload;
-            eventPayload["devices"] = JsonArray();
+
+            Core::JSON::ArrayType<InputDeviceJson> deviceArray;
+            while (devices->Next(resultItem) == true) { deviceArray.Add() = resultItem; }
+            eventPayload.Add(_T("devices"), &deviceArray);
             _parent.Notify(_T("onDevicesChanged"), eventPayload);
         }
     }
