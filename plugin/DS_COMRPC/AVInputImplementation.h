@@ -82,7 +82,7 @@ namespace Plugin {
         Exchange::IDeviceSettingsHDMIIn::HDMIInVRRType m_currentVrrType
             { Exchange::IDeviceSettingsHDMIIn::DS_HDMIIN_VRR_NONE };
 
-        friend class Job;
+        friend class DispatchJob;
 
         AVInputImplementation();
         ~AVInputImplementation() override;
@@ -103,14 +103,14 @@ namespace Plugin {
             ON_AVINPUT_AVI_CONTENT_TYPE_UPDATE
         };
 
-        class EXTERNAL Job : public Core::IDispatch {
+        class EXTERNAL DispatchJob : public Core::IDispatch {
 
         public:
 
             Job() = delete;
             Job(const Job&) = delete;
             Job& operator=(const Job&) = delete;
-            ~Job()
+            ~DispatchJob()
             {
                 if (_avInputImplementation != nullptr) {
                     _avInputImplementation->Release();
@@ -120,9 +120,9 @@ namespace Plugin {
             static Core::ProxyType<Core::IDispatch> Create(AVInputImplementation* avInputImplementation, Event event, ParamsType params)
             {
 #ifndef USE_THUNDER_R4
-                return (Core::proxy_cast<Core::IDispatch>(Core::ProxyType<Job>::Create(avInputImplementation, event, params)));
+                return (Core::proxy_cast<Core::IDispatch>(Core::ProxyType<DispatchJob>::Create(avInputImplementation, event, params)));
 #else
-                return (Core::ProxyType<Core::IDispatch>(Core::ProxyType<Job>::Create(avInputImplementation, event, params)));
+                return (Core::ProxyType<Core::IDispatch>(Core::ProxyType<DispatchJob>::Create(avInputImplementation, event, params)));
 #endif
             }
 
@@ -148,7 +148,7 @@ namespace Plugin {
             const ParamsType        _params;
         };
 
-        void Dispatch(Event event, ParamsType params);
+        void Dispatch(Event event, const ParamsType params);
 
         // =========================================================================
         // COM-RPC notification delegate: IDeviceSettingsHDMIIn::INotification
@@ -292,6 +292,12 @@ namespace Plugin {
 
     private:
 
+        mutable Core::CriticalSection _adminLock;
+        PluginHost::IShell* _service { nullptr };
+        bool _registeredDsEventHandlers { false };
+        int m_primVolume  { DEFAULT_PRIM_VOL_LEVEL };
+        int m_inputVolume { DEFAULT_INPUT_VOL_LEVEL };
+
         // Notification subscriber lists
         std::list<Exchange::IAVInput::IDevicesChangedNotification*>          _devicesChangedNotifications;
         std::list<Exchange::IAVInput::ISignalChangedNotification*>            _signalChangedNotifications;
@@ -300,22 +306,12 @@ namespace Plugin {
         std::list<Exchange::IAVInput::IGameFeatureStatusUpdateNotification*>  _gameFeatureStatusUpdateNotifications;
         std::list<Exchange::IAVInput::IAviContentTypeUpdateNotification*>     _aviContentTypeUpdateNotifications;
 
-        mutable Core::CriticalSection _adminLock;
-        PluginHost::IShell* _service { nullptr };
-        bool _registeredDsEventHandlers { false };
-
-        int m_primVolume  { DEFAULT_PRIM_VOL_LEVEL };
-        int m_inputVolume { DEFAULT_INPUT_VOL_LEVEL };
-
         // Generic notification register/unregister helpers
         template <typename T>
         Core::hresult Register(std::list<T*>& list, T* notification);
 
         template <typename T>
         Core::hresult Unregister(std::list<T*>& list, T* notification);
-
-        template <typename T>
-        void dispatchToList(std::list<T*>& list, std::function<void(T*)> fn);
 
         void dispatchEvent(Event event, ParamsType params);
 
@@ -333,6 +329,10 @@ namespace Plugin {
         void onCompositeInSignalStatus(int port, int signalStatus);
         void onCompositeInStatus(int activePort, bool isPresented);
         void onCompositeInVideoModeUpdate(int activePort, const Exchange::IDeviceSettingsCompositeIn::DisplayVideoPortResolution& videoResolution);
+
+        // Device-list helpers (getInputDevices replaces libds; GetInputDevices identical to DS_IARM)
+        Core::hresult getInputDevices(const string& typeOfInput, std::list<WPEFramework::Exchange::IAVInput::InputDevice>& inputDeviceList);
+        Core::hresult GetInputDevices(const string& typeOfInput, Exchange::IAVInput::IInputDeviceIterator*& devices, bool& success);
 
         // Shared event-to-notification dispatch helpers
         // (identical logic to DS_IARM AVInputSignalChange / AVInputHotplug etc.)
