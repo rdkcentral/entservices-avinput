@@ -131,7 +131,7 @@ namespace Plugin {
                 _avInputImplementation->Dispatch(_event, _params);
             }
 
-        private:
+        protected:
 
             DispatchJob(AVInputImplementation* avInputImplementation, Event event, ParamsType params)
                 : _avInputImplementation(avInputImplementation)
@@ -142,6 +142,8 @@ namespace Plugin {
                     _avInputImplementation->AddRef();
                 }
             }
+
+        private:
 
             AVInputImplementation*  _avInputImplementation;
             const Event             _event;
