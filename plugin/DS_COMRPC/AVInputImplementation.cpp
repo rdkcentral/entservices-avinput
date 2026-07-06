@@ -43,11 +43,11 @@ namespace Plugin {
     AVInputImplementation* AVInputImplementation::_instance = nullptr;
 
     AVInputImplementation::AVInputImplementation()
-        : _adminLock()
+        : _DSHDMIInNotification(*this)
+        , _DSCompositeInNotification(*this)
+        , _adminLock()
         , _service(nullptr)
         , _registeredDsEventHandlers(false)
-        , _DSHDMIInNotification(*this)
-        , _DSCompositeInNotification(*this)
     {
         LOGINFO("Create AVInputImplementation Instance (COM-RPC)");
 
