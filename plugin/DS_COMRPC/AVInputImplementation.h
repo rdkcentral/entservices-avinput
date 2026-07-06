@@ -107,9 +107,9 @@ namespace Plugin {
 
         public:
 
-            Job() = delete;
-            Job(const Job&) = delete;
-            Job& operator=(const Job&) = delete;
+            DispatchJob() = delete;
+            DispatchJob(const DispatchJob&) = delete;
+            DispatchJob& operator=(const DispatchJob&) = delete;
             ~DispatchJob()
             {
                 if (_avInputImplementation != nullptr) {
@@ -133,7 +133,7 @@ namespace Plugin {
 
         private:
 
-            Job(AVInputImplementation* avInputImplementation, Event event, ParamsType params)
+            DispatchJob(AVInputImplementation* avInputImplementation, Event event, ParamsType params)
                 : _avInputImplementation(avInputImplementation)
                 , _event(event)
                 , _params(params)
