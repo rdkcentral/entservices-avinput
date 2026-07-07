@@ -178,18 +178,25 @@ namespace Plugin {
         JsonArray list;
         try
         {
+            Core::hresult res = Core::ERROR_NONE;
             if (iType == INPUT_TYPE_INT_HDMI) {
                 auto* hdmiIn = AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
                 if (hdmiIn != nullptr) {
                     int32_t num = 0;
-                    hdmiIn->GetHDMIInNumberOfInputs(num);
+                    comResult = hdmiIn->GetHDMIInNumberOfInputs(num);
+                    if (Core::ERROR_NONE != comResult) {
+                        LOGERR("GetHDMIInNumberOfInputs failed, Error: %d", static_cast<int>(comResult));
+                    }
 
                     // Collect per-port connection status via GetHDMIInStatus iterator.
                     // HDMIPortConnectionStatus has only isPortConnected (no id field) —
                     // iterate in order; position in iterator == port index.
                     Exchange::IDeviceSettingsHDMIIn::HDMIInStatus hdmiStatus{};
                     Exchange::IDeviceSettingsHDMIIn::IHDMIInPortConnectionStatusIterator* portIter = nullptr;
-                    hdmiIn->GetHDMIInStatus(hdmiStatus, portIter);
+                    comResult = hdmiIn->GetHDMIInStatus(hdmiStatus, portIter);
+                    if (Core::ERROR_NONE != comResult) {
+                        LOGERR("GetHDMIInStatus failed, Error: %d", static_cast<int>(comResult));
+                    }
 
                     std::vector<bool> connected(static_cast<size_t>(num), false);
                     if (portIter != nullptr) {
@@ -217,16 +224,27 @@ namespace Plugin {
                     }
                     hdmiIn->Release();
                 }
+                else {
+                    LOGWARN("IDeviceSettingsHDMIIn not available");
+                }
             }
             else if (iType == INPUT_TYPE_INT_COMPOSITE) {
                 auto* compositeIn = AcquireSubInterface<Exchange::IDeviceSettingsCompositeIn>();
                 if (compositeIn != nullptr) {
                     int32_t num = 0;
-                    compositeIn->GetNrOfCompositeInputs(num);
+                    comResult = compositeIn->GetNrOfCompositeInputs(num);
+                    if (Core::ERROR_NONE != comResult) {
+                        LOGERR("GetNrOfCompositeInputs failed, Error: %d", static_cast<int>(comResult));
+                        compositeIn->Release();
+                        return list;
+                    }
 
                     // Collect per-port connection status via GetCompositeInStatus struct
                     Exchange::IDeviceSettingsCompositeIn::CompositeInStatus status{};
-                    compositeIn->GetCompositeInStatus(status);
+                    comResult = compositeIn->GetCompositeInStatus(status);
+                    if (Core::ERROR_NONE != comResult) {
+                        LOGERR("GetCompositeInStatus failed, Error: %d", static_cast<int>(comResult));
+                    }
 
                     for (int i = 0; i < num; i++) {
                         JsonObject hash;
@@ -241,6 +259,9 @@ namespace Plugin {
                         list.Add(hash);
                     }
                     compositeIn->Release();
+                }
+                else {
+                    LOGWARN("IDeviceSettingsCompositeIn not available");
                 }
             }
         }
