@@ -84,6 +84,9 @@ namespace Plugin {
                 hdmiIn->Release();
                 LOGINFO("AVInputImplementation: IDeviceSettingsHDMIIn::INotification registered");
             }
+            else {
+                LOGWARN("IDeviceSettingsHDMIIn not available");
+            }
         }
 
         // Register Composite-In notification delegate
@@ -93,10 +96,12 @@ namespace Plugin {
                 compositeIn->Register(&_DSCompositeInNotification);
                 compositeIn->Release();
                 LOGINFO("AVInputImplementation: IDeviceSettingsCompositeIn::INotification registered");
+                _registeredDsEventHandlers = true;
+            }
+            else {
+                LOGWARN("IDeviceSettingsCompositeIn not available");
             }
         }
-
-        _registeredDsEventHandlers = true;
     }
 
     // =========================================================================
@@ -402,17 +407,18 @@ namespace Plugin {
         auto* hdmiIn = AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
         if (hdmiIn != nullptr) {
             int32_t count = 0;
-            if (hdmiIn->GetHDMIInNumberOfInputs(count) == Core::ERROR_NONE) {
+            Core::hresult comResult = hdmiIn->GetHDMIInNumberOfInputs(count);
+            if (comResult == Core::ERROR_NONE) {
                 numberOfInputs = static_cast<uint32_t>(count);
                 LOGINFO("numberOfInputs %u", numberOfInputs);
                 success = true;
             } else {
-                LOGERR("GetHDMIInNumberOfInputs failed");
+                LOGERR("GetHDMIInNumberOfInputs failed, Error: %d", static_cast<int>(comResult));
                 success = false;
             }
             hdmiIn->Release();
         } else {
-            LOGERR("NumberOfInputs: IDeviceSettingsHDMIIn not available");
+            LOGERR("IDeviceSettingsHDMIIn not available");
             success = false;
         }
         return Core::ERROR_NONE;
@@ -425,17 +431,18 @@ namespace Plugin {
         auto* hdmiIn = AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
         if (hdmiIn != nullptr) {
             Exchange::IDeviceSettingsHDMIIn::HDMIVideoPortResolution vpRes{};
-            if (hdmiIn->GetHDMIVideoMode(vpRes) == Core::ERROR_NONE) {
+            Core::hresult comResult = hdmiIn->GetHDMIVideoMode(vpRes);
+            if (comResult == Core::ERROR_NONE) {
                 currentVideoMode = vpRes.name;
                 LOGINFO("currentVideoMode %s", currentVideoMode.c_str());
                 success = true;
             } else {
-                LOGERR("GetHDMIVideoMode failed");
+                LOGERR("GetHDMIVideoMode failed, Error: %d", static_cast<int>(comResult));
                 success = false;
             }
             hdmiIn->Release();
         } else {
-            LOGERR("CurrentVideoMode: IDeviceSettingsHDMIIn not available");
+            LOGERR("IDeviceSettingsHDMIIn not available");
             success = false;
         }
         return Core::ERROR_NONE;
@@ -461,28 +468,30 @@ namespace Plugin {
         }
 
         int iType = AVInputUtils::getTypeOfInput(typeOfInput);
+        Core::hresult comResult = Core::ERROR_NONE;
 
         if (iType == INPUT_TYPE_INT_HDMI) {
             // COM-RPC: device::HdmiInput::getInstance().selectPort(id, requestAudioMix, plane, topMost)
             //       → IDeviceSettingsHDMIIn::SelectHDMIInPort()
             auto* hdmiIn = AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
             if (hdmiIn != nullptr) {
-                if (hdmiIn->SelectHDMIInPort(
-                        static_cast<Exchange::IDeviceSettingsHDMIIn::HDMIInPort>(id),
-                        requestAudioMix,
-                        topMost,
-                        static_cast<Exchange::IDeviceSettingsHDMIIn::HDMIVideoPlaneType>(plane)) == Core::ERROR_NONE) {
+                comResult = hdmiIn->SelectHDMIInPort(static_cast<Exchange::IDeviceSettingsHDMIIn::HDMIInPort>(id),
+                                                        requestAudioMix,
+                                                        topMost,
+                                                        static_cast<Exchange::IDeviceSettingsHDMIIn::HDMIVideoPlaneType>(plane));
+                if (comResult == Core::ERROR_NONE) {
                     planeType = plane;
                     // COM-RPC: device::Host::getInstance().setAudioMixerLevels() equivalent
                     // (IDeviceSettingsHost has no SetAudioMixerLevels — skipped, matches DS_IARM behavior
                     // where mixer levels are only set when requestAudioMix is true)
                     successResult.success = true;
                 } else {
-                    LOGERR("SelectHDMIInPort failed for portId=%s", portId.c_str());
+                    LOGERR("SelectHDMIInPort failed for portId=%s, Error: %d", portId.c_str(), static_cast<int>(comResult));
                     successResult.success = false;
                 }
                 hdmiIn->Release();
             } else {
+                LOGERR("StartInput: IDeviceSettingsHDMIIn not available");
                 successResult.success = false;
             }
         } else if (iType == INPUT_TYPE_INT_COMPOSITE) {
@@ -490,16 +499,17 @@ namespace Plugin {
             //       → IDeviceSettingsCompositeIn::SelectCompositeInPort()
             auto* compositeIn = AcquireSubInterface<Exchange::IDeviceSettingsCompositeIn>();
             if (compositeIn != nullptr) {
-                if (compositeIn->SelectCompositeInPort(
-                        static_cast<Exchange::IDeviceSettingsCompositeIn::CompositeInPort>(id)) == Core::ERROR_NONE) {
+                comResult = compositeIn->SelectCompositeInPort(static_cast<Exchange::IDeviceSettingsCompositeIn::CompositeInPort>(id));
+                if (comResult == Core::ERROR_NONE) {
                     successResult.success = true;
                     planeType = plane;  // plane is ignored for composite input, but stored for consistency
                 } else {
-                    LOGERR("SelectCompositeInPort failed for portId=%s", portId.c_str());
+                    LOGERR("SelectCompositeInPort failed for portId=%s, Error: %d", portId.c_str(), static_cast<int>(comResult));
                     successResult.success = false;
                 }
                 compositeIn->Release();
             } else {
+                LOGERR("IDeviceSettingsCompositeIn not available");
                 successResult.success = false;
             }
         } else {
@@ -511,20 +521,29 @@ namespace Plugin {
 
     Core::hresult AVInputImplementation::StopInput(const string& typeOfInput, SuccessResult& successResult)
     {
-        Core::hresult ret = Core::ERROR_NONE;
-        successResult.success = true;
+        successResult.success = false;
 
         LOGINFO("StopInput: typeOfInput %s", typeOfInput.c_str());
         try {
             planeType = -1;
+            Core::hresult comResult = Core::ERROR_NONE;
             if (isAudioBalanceSet) {
                 // COM-RPC: device::Host::getInstance().setAudioMixerLevels() — handle is NULL (0)
                 //       → IDeviceSettingsAudio::SetAudioMixerLevels(0, audioInput, volume)
                 auto* audio = AcquireSubInterface<Exchange::IDeviceSettingsAudio>();
                 if (audio != nullptr) {
-                    audio->SetAudioMixerLevels(0, Exchange::IDeviceSettingsAudio::AUDIO_INPUT_PRIMARY, MAX_PRIM_VOL_LEVEL);
-                    audio->SetAudioMixerLevels(0, Exchange::IDeviceSettingsAudio::AUDIO_INPUT_SYSTEM, DEFAULT_INPUT_VOL_LEVEL);
+                    comResult = audio->SetAudioMixerLevels(0, Exchange::IDeviceSettingsAudio::AUDIO_INPUT_PRIMARY, MAX_PRIM_VOL_LEVEL);
+                    if (comResult != Core::ERROR_NONE) {
+                        LOGERR("SetAudioMixerLevels failed for primary input, Error: %d", static_cast<int>(comResult));
+                    }
+                    comResult = audio->SetAudioMixerLevels(0, Exchange::IDeviceSettingsAudio::AUDIO_INPUT_SYSTEM, DEFAULT_INPUT_VOL_LEVEL);
+                    if (comResult != Core::ERROR_NONE) {
+                        LOGERR("SetAudioMixerLevels failed for system input, Error: %d", static_cast<int>(comResult));
+                    }
                     audio->Release();
+                }
+                else {
+                    LOGERR("IDeviceSettingsAudio not available");
                 }
                 isAudioBalanceSet = false;
             }
@@ -535,11 +554,20 @@ namespace Plugin {
                     //       → IDeviceSettingsHDMIIn::SelectHDMIInPort(DS_HDMI_IN_PORT_NONE)
                     auto* hdmiIn = AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
                     if (hdmiIn != nullptr) {
-                        hdmiIn->SelectHDMIInPort(
-                            Exchange::IDeviceSettingsHDMIIn::DS_HDMI_IN_PORT_NONE,
-                            false, false,
-                            Exchange::IDeviceSettingsHDMIIn::DS_HDMIIN_VIDEOPLANE_PRIMARY);
+                        comResult = hdmiIn->SelectHDMIInPort( Exchange::IDeviceSettingsHDMIIn::DS_HDMI_IN_PORT_NONE, 
+                                                                false,
+                                                                false,
+                                                                Exchange::IDeviceSettingsHDMIIn::DS_HDMIIN_VIDEOPLANE_PRIMARY);
+                        if (comResult != Core::ERROR_NONE) {
+                            LOGERR("SelectHDMIInPort failed for DS_HDMI_IN_PORT_NONE, Error: %d", static_cast<int>(comResult));
+                        }
+                        else {
+                            successResult.success = true;
+                        }
                         hdmiIn->Release();
+                    }
+                    else {
+                        LOGERR("IDeviceSettingsHDMIIn not available");
                     }
                     break;
                 }
@@ -548,9 +576,17 @@ namespace Plugin {
                     //       → IDeviceSettingsCompositeIn::SelectCompositeInPort(DS_COMPOSITE_IN_PORT_NONE)
                     auto* compositeIn = AcquireSubInterface<Exchange::IDeviceSettingsCompositeIn>();
                     if (compositeIn != nullptr) {
-                        compositeIn->SelectCompositeInPort(
-                            Exchange::IDeviceSettingsCompositeIn::DS_COMPOSITE_IN_PORT_NONE);
+                        comResult = compositeIn->SelectCompositeInPort(Exchange::IDeviceSettingsCompositeIn::DS_COMPOSITE_IN_PORT_NONE);
+                        if (comResult != Core::ERROR_NONE) {
+                            LOGERR("SelectCompositeInPort failed for DS_COMPOSITE_IN_PORT_NONE, Error: %d", static_cast<int>(comResult));
+                        }
+                        else {
+                            successResult.success = true;
+                        }
                         compositeIn->Release();
+                    }
+                    else {
+                        LOGERR("IDeviceSettingsCompositeIn not available");
                     }
                     break;
                 }
@@ -573,6 +609,7 @@ namespace Plugin {
         const uint16_t w, const uint16_t h, const string& typeOfInput, SuccessResult& successResult)
     {
         int iType = AVInputUtils::getTypeOfInput(typeOfInput);
+        Core::hresult comResult = Core::ERROR_NONE;
 
         if (iType == INPUT_TYPE_INT_HDMI) {
             // COM-RPC: device::HdmiInput::getInstance().scaleVideo(x, y, w, h)
@@ -581,13 +618,16 @@ namespace Plugin {
             if (hdmiIn != nullptr) {
                 Exchange::IDeviceSettingsHDMIIn::HDMIInVideoRectangle rect{};
                 rect.x = x; rect.y = y; rect.width = w; rect.height = h;
-                if (hdmiIn->ScaleHDMIInVideo(rect) == Core::ERROR_NONE) {
+                comResult = hdmiIn->ScaleHDMIInVideo(rect);
+                if (comResult == Core::ERROR_NONE) {
                     successResult.success = true;
                 } else {
+                    LOGERR("ScaleHDMIInVideo failed, Error: %d", static_cast<int>(comResult));
                     successResult.success = false;
                 }
                 hdmiIn->Release();
             } else {
+                LOGERR("IDeviceSettingsHDMIIn not available");
                 successResult.success = false;
             }
         } else if (iType == INPUT_TYPE_INT_COMPOSITE) {
@@ -597,16 +637,20 @@ namespace Plugin {
             if (compositeIn != nullptr) {
                 Exchange::IDeviceSettingsCompositeIn::VideoRectangle rect{};
                 rect.x = x; rect.y = y; rect.width = w; rect.height = h;
-                if (compositeIn->ScaleCompositeInVideo(rect) == Core::ERROR_NONE) {
+                comResult = compositeIn->ScaleCompositeInVideo(rect);
+                if (comResult == Core::ERROR_NONE) {
                     successResult.success = true;
                 } else {
+                    LOGERR("ScaleCompositeInVideo failed, Error: %d", static_cast<int>(comResult));
                     successResult.success = false;
                 }
                 compositeIn->Release();
             } else {
+                LOGERR("IDeviceSettingsCompositeIn not available");
                 successResult.success = false;
             }
         } else {
+            LOGERR("SetVideoRectangle: Unknown typeOfInput: %s", typeOfInput.c_str());
             successResult.success = false;
         }
         LOGINFO("SetVideoRectangle: x=%u, y=%u, w=%u, h=%u, typeOfInput=%s, success=%d", x, y, w, h, typeOfInput.c_str(), successResult.success);
@@ -620,29 +664,42 @@ namespace Plugin {
     // =========================================================================
     Core::hresult AVInputImplementation::getInputDevices(const string& typeOfInput, std::list<WPEFramework::Exchange::IAVInput::InputDevice>& inputDeviceList)
     {
-        int num = 0;
+        int32_t num = 0;
         bool isHdmi = true;
+        Core::hresult comResult = Core::ERROR_GENERAL;
 
         try {
             switch(AVInputUtils::getTypeOfInput(typeOfInput)) {
                 case INPUT_TYPE_INT_HDMI: {
                     // COM-RPC: device::HdmiInput::getInstance().getNumberOfInputs()
                     auto* hdmiIn = AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
-                    if (hdmiIn == nullptr) return Core::ERROR_GENERAL;
-                    int32_t n = 0;
-                    hdmiIn->GetHDMIInNumberOfInputs(n);
+                    if (nullptr != hdmiIn) {
+                        comResult = hdmiIn->GetHDMIInNumberOfInputs(num);
+                        if (comResult != Core::ERROR_NONE) {
+                            LOGERR("GetHDMIInNumberOfInputs failed, Error: %d", static_cast<int>(comResult));
+                            num = 0;
+                        }
+                    } else {
+                        LOGERR("IDeviceSettingsHDMIIn not available");
+                        num = 0;
+                    }
                     hdmiIn->Release();
-                    num = static_cast<int>(n);
                     break;
                 }
                 case INPUT_TYPE_INT_COMPOSITE: {
                     // COM-RPC: device::CompositeInput::getInstance().getNumberOfInputs()
                     auto* compositeIn = AcquireSubInterface<Exchange::IDeviceSettingsCompositeIn>();
-                    if (compositeIn == nullptr) return Core::ERROR_GENERAL;
-                    int32_t n = 0;
-                    compositeIn->GetNrOfCompositeInputs(n);
+                    if (nullptr != compositeIn) {
+                        comResult = compositeIn->GetNrOfCompositeInputs(num);
+                        if (comResult != Core::ERROR_NONE) {
+                            LOGERR("GetNrOfCompositeInputs failed, Error: %d", static_cast<int>(comResult));
+                            num = 0;
+                        }
+                    } else {
+                        LOGERR("IDeviceSettingsCompositeIn not available");
+                        num = 0;
+                    }
                     compositeIn->Release();
-                    num = static_cast<int>(n);
                     isHdmi = false;
                     break;
                 }
@@ -665,7 +722,10 @@ namespace Plugin {
                     if (hdmiIn != nullptr) {
                         Exchange::IDeviceSettingsHDMIIn::HDMIInStatus hdmiStatus{};
                         Exchange::IDeviceSettingsHDMIIn::IHDMIInPortConnectionStatusIterator* portIter = nullptr;
-                        hdmiIn->GetHDMIInStatus(hdmiStatus, portIter);
+                        comResult = hdmiIn->GetHDMIInStatus(hdmiStatus, portIter);
+                        if (comResult != Core::ERROR_NONE) {
+                            LOGERR("GetHDMIInStatus failed, Error: %d", static_cast<int>(comResult));
+                        }
                         if (portIter != nullptr) {
                             Exchange::IDeviceSettingsHDMIIn::HDMIPortConnectionStatus portStatus{};
                             int portIdx = 0;
@@ -677,13 +737,21 @@ namespace Plugin {
                             }
                             portIter->Release();
                         }
+                        else {
+                            LOGERR("GetHDMIInStatus returned null port iterator");
+                        }
                         hdmiIn->Release();
                     }
                 } else {
                     auto* compositeIn = AcquireSubInterface<Exchange::IDeviceSettingsCompositeIn>();
                     if (compositeIn != nullptr) {
                         Exchange::IDeviceSettingsCompositeIn::CompositeInStatus status{};
-                        compositeIn->GetCompositeInStatus(status);
+                        comResult = compositeIn->GetCompositeInStatus(status);
+                        if (comResult != Core::ERROR_NONE) {
+                            LOGERR("GetCompositeInStatus failed, Error: %d", static_cast<int>(comResult));
+                            status.isPort0Connected = false;
+                            status.isPort1Connected = false;
+                        }
                         if (num > 0) connected[0] = status.isPort0Connected;
                         if (num > 1) connected[1] = status.isPort1Connected;
                         compositeIn->Release();
@@ -709,10 +777,9 @@ namespace Plugin {
             }
         } catch (const std::exception& e) {
             LOGERR("AVInputService::getInputDevices Failed");
-            return Core::ERROR_GENERAL;
         }
 
-        return Core::ERROR_NONE;
+        return comResult;
     }
 
     Core::hresult AVInputImplementation::GetInputDevices(const string& typeOfInput, IInputDeviceIterator*& devices, bool& success)
@@ -737,11 +804,12 @@ namespace Plugin {
                 }
                 default: {
                     LOGERR("GetInputDevices: Invalid input type");
-                    return Core::ERROR_NONE;
+                    return Core::ERROR_GENERAL;
                 }
             }
         } catch(...) {
-            return Core::ERROR_NONE;
+            LOGERR("GetInputDevices: Exception occurred while getting input devices");
+            return Core::ERROR_GENERAL;
         }
 
         if(Core::ERROR_NONE == result) {
@@ -783,10 +851,12 @@ namespace Plugin {
 
         auto* hdmiIn = AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
         if (hdmiIn != nullptr) {
+            Core::hresult comResult = Core::ERROR_NONE;
             constexpr uint16_t kEdidMaxLen = 256;
             uint8_t edidBuf[kEdidMaxLen] = {};
-            if (hdmiIn->GetEdidBytes(static_cast<Exchange::IDeviceSettingsHDMIIn::HDMIInPort>(id),
-                                     kEdidMaxLen, edidBuf) == Core::ERROR_NONE) {
+            comResult = hdmiIn->GetEdidBytes(static_cast<Exchange::IDeviceSettingsHDMIIn::HDMIInPort>(id),
+                                            kEdidMaxLen, edidBuf);
+            if (comResult == Core::ERROR_NONE) {
                 Core::ToString(edidBuf, kEdidMaxLen, true, EDID);
                 success = true;
             } else {
@@ -795,6 +865,7 @@ namespace Plugin {
             }
             hdmiIn->Release();
         } else {
+            LOGERR("IDeviceSettingsHDMIIn not available");
             success = false;
         }
         return Core::ERROR_NONE;
@@ -1031,6 +1102,8 @@ namespace Plugin {
     {
         string gameFeature;
 
+        LOGINFO("AVInputVRRChange port=%d vrr_type=%d vrr_mode=%d", port, static_cast<int>(vrr_type), vrr_mode);
+
         switch (vrr_type) {
         case Exchange::IDeviceSettingsHDMIIn::DS_HDMIIN_HDMI_VRR:
             gameFeature = VRR_TYPE_HDMI;
@@ -1159,35 +1232,36 @@ namespace Plugin {
     {
         // COM-RPC: device::HdmiInput::getInstance().getSupportedGameFeatures(supportedFeatures)
         //       → IDeviceSettingsHDMIIn::GetSupportedGameFeaturesList()
-        Core::hresult result = Core::ERROR_NONE;
-        success = true;
+        success = false;
         features = nullptr;
         std::vector<std::string> supportedFeatures;
 
         auto* hdmiIn = AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
         if (hdmiIn != nullptr) {
             Exchange::IDeviceSettingsHDMIIn::IHDMIInGameFeatureListIterator* iter = nullptr;
-            if (hdmiIn->GetSupportedGameFeaturesList(iter) == Core::ERROR_NONE && iter != nullptr) {
+            Core::hresult comResult = Core::ERROR_NONE;
+            comResult = hdmiIn->GetSupportedGameFeaturesList(iter);
+            if (comResult == Core::ERROR_NONE && iter != nullptr) {
                 Exchange::IDeviceSettingsHDMIIn::HDMIInGameFeatureList feature{};
                 while (iter->Next(feature)) {
                     supportedFeatures.push_back(feature.gameFeature);
                 }
                 iter->Release();
+                if (!supportedFeatures.empty() && comResult == Core::ERROR_NONE) {
+                    features = Core::Service<RPC::IteratorType<Exchange::IAVInput::IStringIterator>>::Create<Exchange::IAVInput::IStringIterator>(supportedFeatures);
+                    LOGINFO("GetSupportedGameFeatures: %zu", supportedFeatures.size());
+                    success = true;
+                } else {
+                    LOGERR("GetSupportedGameFeaturesList returned empty list");
+                }
             } else {
-                success = false;
+                LOGERR("GetSupportedGameFeaturesList failed, Error: %d", static_cast<int>(comResult));
             }
             hdmiIn->Release();
         } else {
-            success = false;
+            LOGERR("IDeviceSettingsHDMIIn not available");
         }
-
-        if (!supportedFeatures.empty() && result == Core::ERROR_NONE) {
-            features = Core::Service<RPC::IteratorType<Exchange::IAVInput::IStringIterator>>::Create<Exchange::IAVInput::IStringIterator>(supportedFeatures);
-            LOGINFO("GetSupportedGameFeatures: %zu", supportedFeatures.size());
-        } else {
-            success = false;
-        }
-        return result;
+        return Core::ERROR_NONE;
     }
 
     Core::hresult AVInputImplementation::GetGameFeatureStatus(const string& portId, const string& gameFeature, bool& mode, bool& success)
@@ -1236,9 +1310,14 @@ namespace Plugin {
         bool allm = false;
         auto* hdmiIn = AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
         if (hdmiIn != nullptr) {
-            hdmiIn->GetHDMIInAllmStatus(
-                static_cast<Exchange::IDeviceSettingsHDMIIn::HDMIInPort>(iPort),
-                allm);
+            Core::hresult comResult = Core::ERROR_NONE;
+            comResult = hdmiIn->GetHDMIInAllmStatus(static_cast<Exchange::IDeviceSettingsHDMIIn::HDMIInPort>(iPort),allm);
+            if (comResult != Core::ERROR_NONE) {
+                LOGERR("getALLMStatus failed for portId=%d, Error: %d", iPort, static_cast<int>(comResult));
+            }
+            else {
+                LOGINFO("getALLMStatus for portId=%d, ALLM Mode: %s", iPort, allm ? "true" : "false");
+            }
             hdmiIn->Release();
         }
         return allm;
@@ -1251,12 +1330,17 @@ namespace Plugin {
         bool ret = false;
         auto* hdmiIn = AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
         if (hdmiIn != nullptr) {
-            if (hdmiIn->GetVRRStatus(
-                    static_cast<Exchange::IDeviceSettingsHDMIIn::HDMIInPort>(iPort),
-                    vrrStatus) == Core::ERROR_NONE) {
+            Core::hresult comResult = Core::ERROR_NONE;
+            comResult = hdmiIn->GetVRRStatus(
+                static_cast<Exchange::IDeviceSettingsHDMIIn::HDMIInPort>(iPort),
+                vrrStatus);
+            if (comResult == Core::ERROR_NONE) {
                 LOGWARN("getVRRStatus VRR TYPE: %d, VRR FRAMERATE: %f",
                     static_cast<int>(vrrStatus.vrrType), vrrStatus.vrrFreeSyncFramerateHz);
                 ret = true;
+            }
+            else {
+                LOGERR("getVRRStatus failed for portId=%d, Error: %d", iPort, static_cast<int>(comResult));
             }
             hdmiIn->Release();
         }
@@ -1298,6 +1382,7 @@ namespace Plugin {
             success = false;
             return Core::ERROR_NONE;
         }
+        success = false;
 
         vector<uint8_t> spdVect({ 'u', 'n', 'k', 'n', 'o', 'w', 'n' });
         HDMISPD.clear();
@@ -1308,43 +1393,48 @@ namespace Plugin {
             auto* hdmiIn = AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
             if (hdmiIn == nullptr) {
                 success = false;
+                LOGERR("IDeviceSettingsHDMIIn not available");
                 return Core::ERROR_NONE;
             }
             constexpr uint16_t kSpdMaxLen = 256;
             uint8_t spdBuf[kSpdMaxLen] = {};
-            bool spdOk = (hdmiIn->GetHDMISPDInformation(
+            Core::hresult comResult = Core::ERROR_NONE;
+            comResult = hdmiIn->GetHDMISPDInformation(
                 static_cast<Exchange::IDeviceSettingsHDMIIn::HDMIInPort>(id),
-                kSpdMaxLen, spdBuf) == Core::ERROR_NONE);
-            hdmiIn->Release();
-            if (!spdOk) {
+                kSpdMaxLen, spdBuf);
+            if (comResult != Core::ERROR_NONE) {
+                LOGERR("GetHDMISPDInformation failed for portId=%d, Error: %d", id, static_cast<int>(comResult));
                 success = false;
-                return Core::ERROR_NONE;
             }
+            else {
+                LOGINFO("GetHDMISPDInformation succeeded for portId=%d", id);
+                success = true;
+            }
+            hdmiIn->Release();
+
             vector<uint8_t> spdVect2(spdBuf, spdBuf + kSpdMaxLen);
             spdVect = std::move(spdVect2); // spdVect must be "unknown" unless we successfully get to this line
 
             // convert to base64
             uint16_t size = min(spdVect.size(), (size_t)numeric_limits<uint16_t>::max());
 
-            LOGWARN("AVInputImplementation::getSPD size:%d spdVec.size:%zu for portId: %s ", size, spdVect.size(), portId.c_str());
+            LOGINFO("AVInputImplementation::getSPD size:%d spdVec.size:%zu for portId: %s ", size, spdVect.size(), portId.c_str());
 
             if (spdVect.size() > (size_t)numeric_limits<uint16_t>::max()) {
                 LOGERR("Size too large to use ToString base64 wpe api");
                 success = false;
-                return Core::ERROR_NONE;
             }
-
-            LOGINFO("------------getSPD: ");
-            for (size_t itr = 0; itr < spdVect.size(); itr++) {
-                LOGINFO("%02X ", spdVect[itr]);
+            else {
+                LOGINFO("------------getSPD: ");
+                for (size_t itr = 0; itr < spdVect.size(); itr++) {
+                    LOGINFO("%02X ", spdVect[itr]);
+                }
+                Core::ToString((uint8_t*)&spdVect[0], size, false, HDMISPD);
             }
-            Core::ToString((uint8_t*)&spdVect[0], size, false, HDMISPD);
         } catch (const std::exception& err) {
             success = false;
             return Core::ERROR_NONE;
         }
-
-        success = true;
         return Core::ERROR_NONE;
     }
 
@@ -1370,16 +1460,20 @@ namespace Plugin {
             auto* hdmiIn = AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
             if (hdmiIn == nullptr) {
                 success = false;
+                LOGERR("IDeviceSettingsHDMIIn not available");
                 return Core::ERROR_NONE;
             }
             constexpr uint16_t kSpdMaxLen = 256;
             uint8_t spdBuf[kSpdMaxLen] = {};
-            bool spdOk = (hdmiIn->GetHDMISPDInformation(
+            Core::hresult comResult = Core::ERROR_NONE;
+            comResult = hdmiIn->GetHDMISPDInformation(
                 static_cast<Exchange::IDeviceSettingsHDMIIn::HDMIInPort>(id),
-                kSpdMaxLen, spdBuf) == Core::ERROR_NONE);
+                kSpdMaxLen, spdBuf);
+            bool spdOk = (comResult == Core::ERROR_NONE);
             hdmiIn->Release();
             if (!spdOk) {
                 success = false;
+                LOGERR("GetHDMISPDInformation failed for portId=%d", id);
                 return Core::ERROR_NONE;
             }
             vector<uint8_t> spdVect2(spdBuf, spdBuf + kSpdMaxLen);
@@ -1437,6 +1531,8 @@ namespace Plugin {
             return Core::ERROR_NONE;
         }
 
+        successResult.success = true;
+
         if (m_primVolume > MAX_PRIM_VOL_LEVEL) {
             LOGWARN("Primary Volume greater than limit. Set to MAX_PRIM_VOL_LEVEL(100) !!!\n");
             m_primVolume = MAX_PRIM_VOL_LEVEL;
@@ -1452,22 +1548,29 @@ namespace Plugin {
             //       handle=0 because DS_IARM passes NULL to HAL (not port-specific)
             auto* audio = AcquireSubInterface<Exchange::IDeviceSettingsAudio>();
             if (audio == nullptr) {
-                LOGWARN("Not setting SoC volume !!!\n");
+                LOGERR("IDeviceSettingsAudio not available");
                 successResult.success = false;
                 return Core::ERROR_NONE;
             }
-            audio->SetAudioMixerLevels(0, Exchange::IDeviceSettingsAudio::AUDIO_INPUT_PRIMARY, primaryVolume);
-            audio->SetAudioMixerLevels(0, Exchange::IDeviceSettingsAudio::AUDIO_INPUT_SYSTEM, inputVolume);
+            Core::hresult comResult = Core::ERROR_NONE;
+            comResult = audio->SetAudioMixerLevels(0, Exchange::IDeviceSettingsAudio::AUDIO_INPUT_PRIMARY, primaryVolume);
+            if (comResult != Core::ERROR_NONE) {
+                LOGERR("SetAudioMixerLevels failed for primaryVolume=%d, Error: %d", primaryVolume, static_cast<int>(comResult));
+                successResult.success = false;
+            }
+            comResult = audio->SetAudioMixerLevels(0, Exchange::IDeviceSettingsAudio::AUDIO_INPUT_SYSTEM, inputVolume);
+            if (comResult != Core::ERROR_NONE) {
+                LOGERR("SetAudioMixerLevels failed for inputVolume=%d, Error: %d", inputVolume, static_cast<int>(comResult));
+                successResult.success = false;
+            }
             LOGINFO("Setting MixerLevels: primaryVolume[%d] inputVolume[%d]", primaryVolume, inputVolume);
             audio->Release();
         } catch (...) {
-            LOGWARN("Not setting SoC volume !!!\n");
+            LOGERR("Exception occurred while setting SoC volume levels");
             successResult.success = false;
-            return Core::ERROR_NONE;
         }
 
-        isAudioBalanceSet = true;
-        successResult.success = true;
+        isAudioBalanceSet = successResult.success;
         return Core::ERROR_NONE;
     }
 
@@ -1486,16 +1589,20 @@ namespace Plugin {
 
         auto* hdmiIn = AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
         if (hdmiIn != nullptr) {
-            if (hdmiIn->SetHDMIInEdid2AllmSupport(
-                    static_cast<Exchange::IDeviceSettingsHDMIIn::HDMIInPort>(id),
-                    allmSupport) == Core::ERROR_NONE) {
+            Core::hresult comResult = Core::ERROR_NONE;
+            comResult = hdmiIn->SetHDMIInEdid2AllmSupport(
+                static_cast<Exchange::IDeviceSettingsHDMIIn::HDMIInPort>(id),
+                allmSupport);
+            if (comResult == Core::ERROR_NONE) {
                 LOGINFO("SetEdid2AllmSupport portId[%s] allm=%d", portId.c_str(), allmSupport);
                 successResult.success = true;
             } else {
+                LOGERR("SetEdid2AllmSupport failed for portId=%d, Error: %d", id, static_cast<int>(comResult));
                 successResult.success = false;
             }
             hdmiIn->Release();
         } else {
+            LOGERR("IDeviceSettingsHDMIIn not available");
             successResult.success = false;
         }
         return Core::ERROR_NONE;
@@ -1516,16 +1623,20 @@ namespace Plugin {
 
         auto* hdmiIn = AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
         if (hdmiIn != nullptr) {
-            if (hdmiIn->GetHDMIInEdid2AllmSupport(
-                    static_cast<Exchange::IDeviceSettingsHDMIIn::HDMIInPort>(id),
-                    allmSupport) == Core::ERROR_NONE) {
+            Core::hresult comResult = Core::ERROR_NONE;
+            comResult = hdmiIn->GetHDMIInEdid2AllmSupport(
+                static_cast<Exchange::IDeviceSettingsHDMIIn::HDMIInPort>(id),
+                allmSupport);
+            if (comResult == Core::ERROR_NONE) {
                 LOGINFO("GetEdid2AllmSupport for portId[%s]: %d", portId.c_str(), allmSupport);
                 success = true;
             } else {
+                LOGERR("GetEdid2AllmSupport failed for portId=%d, Error: %d", id, static_cast<int>(comResult));
                 success = false;
             }
             hdmiIn->Release();
         } else {
+            LOGERR("IDeviceSettingsHDMIIn not available");
             success = false;
         }
         return Core::ERROR_NONE;
@@ -1546,16 +1657,20 @@ namespace Plugin {
 
         auto* hdmiIn = AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
         if (hdmiIn != nullptr) {
-            if (hdmiIn->GetVRRSupport(
-                    static_cast<Exchange::IDeviceSettingsHDMIIn::HDMIInPort>(id),
-                    vrrSupport) == Core::ERROR_NONE) {
+            Core::hresult comResult = Core::ERROR_NONE;
+            comResult = hdmiIn->GetVRRSupport(
+                static_cast<Exchange::IDeviceSettingsHDMIIn::HDMIInPort>(id),
+                vrrSupport);
+            if (comResult == Core::ERROR_NONE) {
                 LOGINFO("GetVRRSupport for portId[%s]: %d", portId.c_str(), vrrSupport);
                 success = true;
             } else {
+                LOGERR("GetVRRSupport failed for portId=%d, Error: %d", id, static_cast<int>(comResult));
                 success = false;
             }
             hdmiIn->Release();
         } else {
+            LOGERR("IDeviceSettingsHDMIIn not available");
             success = false;
         }
         return Core::ERROR_NONE;
@@ -1576,16 +1691,20 @@ namespace Plugin {
 
         auto* hdmiIn = AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
         if (hdmiIn != nullptr) {
-            if (hdmiIn->SetVRRSupport(
-                    static_cast<Exchange::IDeviceSettingsHDMIIn::HDMIInPort>(id),
-                    vrrSupport) == Core::ERROR_NONE) {
+            Core::hresult comResult = Core::ERROR_NONE;
+            comResult = hdmiIn->SetVRRSupport(
+                static_cast<Exchange::IDeviceSettingsHDMIIn::HDMIInPort>(id),
+                vrrSupport);
+            if (comResult == Core::ERROR_NONE) {
                 LOGINFO("SetVRRSupport portId[%s] vrr=%d", portId.c_str(), vrrSupport);
                 successResult.success = true;
             } else {
+                LOGERR("SetVRRSupport failed for portId=%d, Error: %d", id, static_cast<int>(comResult));
                 successResult.success = false;
             }
             hdmiIn->Release();
         } else {
+            LOGERR("IDeviceSettingsHDMIIn not available");
             successResult.success = false;
         }
         return Core::ERROR_NONE;
@@ -1606,11 +1725,12 @@ namespace Plugin {
 
         auto* hdmiIn = AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
         if (hdmiIn != nullptr) {
-            Exchange::IDeviceSettingsHDMIIn::HDMIInCapabilityVersion capVer =
-                Exchange::IDeviceSettingsHDMIIn::HDMI_COMPATIBILITY_VERSION_14;
-            if (hdmiIn->GetHDMIVersion(
-                    static_cast<Exchange::IDeviceSettingsHDMIIn::HDMIInPort>(id),
-                    capVer) == Core::ERROR_NONE) {
+            Exchange::IDeviceSettingsHDMIIn::HDMIInCapabilityVersion capVer = Exchange::IDeviceSettingsHDMIIn::HDMI_COMPATIBILITY_VERSION_14;
+            Core::hresult comResult = Core::ERROR_NONE;
+            comResult = hdmiIn->GetHDMIVersion(
+                static_cast<Exchange::IDeviceSettingsHDMIIn::HDMIInPort>(id),
+                capVer);
+            if (comResult == Core::ERROR_NONE) {
                 switch (static_cast<int>(capVer)) {
                 case static_cast<int>(Exchange::IDeviceSettingsHDMIIn::HDMI_COMPATIBILITY_VERSION_14):
                     HdmiCapabilityVersion = "1.4"; success = true; break;
@@ -1619,13 +1739,16 @@ namespace Plugin {
                 case static_cast<int>(Exchange::IDeviceSettingsHDMIIn::HDMI_COMPATIBILITY_VERSION_21):
                     HdmiCapabilityVersion = "2.1"; success = true; break;
                 default:
+                    LOGERR("GetHdmiVersion: Unknown HDMI version, capVer=%d", static_cast<int>(capVer));
                     success = false; break;
                 }
             } else {
+                LOGERR("GetHdmiVersion failed for portId=%d, Error: %d", id, static_cast<int>(comResult));
                 success = false;
             }
             hdmiIn->Release();
         } else {
+            LOGERR("IDeviceSettingsHDMIIn not available");
             success = false;
         }
         return Core::ERROR_NONE;
@@ -1644,8 +1767,7 @@ namespace Plugin {
             return Core::ERROR_NONE;
         }
 
-        Exchange::IDeviceSettingsHDMIIn::HDMIInEdidVersion edidVer =
-            Exchange::IDeviceSettingsHDMIIn::HDMI_EDID_VER_14;
+        Exchange::IDeviceSettingsHDMIIn::HDMIInEdidVersion edidVer = Exchange::IDeviceSettingsHDMIIn::HDMI_EDID_VER_14;
         if (edidVersion == "HDMI1.4") {
             edidVer = Exchange::IDeviceSettingsHDMIIn::HDMI_EDID_VER_14;
         } else if (edidVersion == "HDMI2.0") {
@@ -1658,16 +1780,20 @@ namespace Plugin {
 
         auto* hdmiIn = AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
         if (hdmiIn != nullptr) {
-            if (hdmiIn->SetHDMIEdidVersion(
-                    static_cast<Exchange::IDeviceSettingsHDMIIn::HDMIInPort>(id),
-                    edidVer) == Core::ERROR_NONE) {
+            Core::hresult comResult = Core::ERROR_NONE;
+            comResult = hdmiIn->SetHDMIEdidVersion(
+                static_cast<Exchange::IDeviceSettingsHDMIIn::HDMIInPort>(id),
+                edidVer);
+            if (comResult == Core::ERROR_NONE) {
                 LOGINFO("SetEdidVersion portId[%s] version=%s", portId.c_str(), edidVersion.c_str());
                 successResult.success = true;
             } else {
+                LOGERR("SetEdidVersion failed for portId[%s], Error: %d", portId.c_str(), static_cast<int>(comResult));
                 successResult.success = false;
             }
             hdmiIn->Release();
         } else {
+            LOGERR("IDeviceSettingsHDMIIn not available");
             successResult.success = false;
         }
         return Core::ERROR_NONE;
@@ -1688,11 +1814,12 @@ namespace Plugin {
 
         auto* hdmiIn = AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
         if (hdmiIn != nullptr) {
-            Exchange::IDeviceSettingsHDMIIn::HDMIInEdidVersion ver =
-                Exchange::IDeviceSettingsHDMIIn::HDMI_EDID_VER_14;
-            if (hdmiIn->GetHDMIEdidVersion(
-                    static_cast<Exchange::IDeviceSettingsHDMIIn::HDMIInPort>(id),
-                    ver) == Core::ERROR_NONE) {
+            Exchange::IDeviceSettingsHDMIIn::HDMIInEdidVersion ver = Exchange::IDeviceSettingsHDMIIn::HDMI_EDID_VER_14;
+            Core::hresult comResult = Core::ERROR_NONE;
+            comResult = hdmiIn->GetHDMIEdidVersion(
+                static_cast<Exchange::IDeviceSettingsHDMIIn::HDMIInPort>(id),
+                ver);
+            if (comResult == Core::ERROR_NONE) {
                 switch (ver) {
                 case Exchange::IDeviceSettingsHDMIIn::HDMI_EDID_VER_14:
                     edidVersion = "HDMI1.4"; success = true; break;
@@ -1703,10 +1830,12 @@ namespace Plugin {
                     success = false; break;
                 }
             } else {
+                LOGERR("GetEdidVersion failed for portId[%s], Error: %d", portId.c_str(), static_cast<int>(comResult));
                 success = false;
             }
             hdmiIn->Release();
         } else {
+            LOGERR("IDeviceSettingsHDMIIn not available");
             success = false;
         }
         return Core::ERROR_NONE;
@@ -1727,16 +1856,19 @@ namespace Plugin {
             // In practice this is called with the HDMI_ARC0 handle.
             // Since we don't have cached audio handles here, query via the Audio sub-interface
             // with handle 0 as a best-effort approach.
-            if (audio->GetAudioHDMIARCPortId(0, id) == Core::ERROR_NONE && id >= 0) {
+            Core::hresult comResult = Core::ERROR_NONE;
+            comResult = audio->GetAudioHDMIARCPortId(0, id);
+            if (comResult == Core::ERROR_NONE && id >= 0) {
                 LOGINFO("HDMI ARC port ID: %d", id);
                 portId = std::to_string(id);
                 success = true;
             } else {
-                LOGWARN("GetAudioHDMIARCPortId failed");
+                LOGWARN("GetAudioHDMIARCPortId failed, Error: %d", static_cast<int>(comResult));
                 success = false;
             }
             audio->Release();
         } else {
+            LOGERR("IDeviceSettingsAudio not available");
             success = false;
         }
         return Core::ERROR_NONE;
