@@ -178,7 +178,7 @@ namespace Plugin {
         JsonArray list;
         try
         {
-            Core::hresult res = Core::ERROR_NONE;
+            Core::hresult comResult = Core::ERROR_NONE;
             if (iType == INPUT_TYPE_INT_HDMI) {
                 auto* hdmiIn = AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
                 if (hdmiIn != nullptr) {
