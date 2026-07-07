@@ -599,10 +599,9 @@ namespace Plugin {
         } catch(...) {
             LOGWARN("AVInputImplementation::StopInput Failed");
             successResult.success = false;
-            ret = Core::ERROR_NONE;
         }
 
-        return ret;
+        return Core::ERROR_NONE;
     }    
 
     Core::hresult AVInputImplementation::SetVideoRectangle(const uint16_t x, const uint16_t y,
