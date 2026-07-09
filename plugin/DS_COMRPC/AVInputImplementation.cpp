@@ -982,34 +982,23 @@ namespace Plugin {
         if (type == INPUT_TYPE_INT_HDMI) {
             locator << "hdmiin://localhost/deviceid/" << port;
 
-            // COM-RPC: HDMIVideoPortResolution uses HDMIInTVResolution (width/height encoded as enum)
-            // Extract width/height from resolution.pixelResolution (same encoding as DS_IARM dsVideoPixelResolution_t)
+            // COM-RPC: HDMIVideoPortResolution.pixelResolution is HDMIInVideoResolution —
+            // a pixel-dimension enum (values 0–6) matching DS_IARM dsVideoPixelResolution_t.
             switch (resolution.pixelResolution) {
-            case Exchange::IDeviceSettingsHDMIIn::DS_HDMIIN_RESOLUTION_480I:
-            case Exchange::IDeviceSettingsHDMIIn::DS_HDMIIN_RESOLUTION_480P:
+            case Exchange::IDeviceSettingsHDMIIn::DS_HDMIIN_PIXELRES_720X480:
                 width = 720;  height = 480;  break;
-            case Exchange::IDeviceSettingsHDMIIn::DS_HDMIIN_RESOLUTION_576I:
-            case Exchange::IDeviceSettingsHDMIIn::DS_HDMIIN_RESOLUTION_576P:
-            case Exchange::IDeviceSettingsHDMIIn::DS_HDMIIN_RESOLUTION_576P50:
+            case Exchange::IDeviceSettingsHDMIIn::DS_HDMIIN_PIXELRES_720X576:
                 width = 720;  height = 576;  break;
-            case Exchange::IDeviceSettingsHDMIIn::DS_HDMIIN_RESOLUTION_720P:
-            case Exchange::IDeviceSettingsHDMIIn::DS_HDMIIN_RESOLUTION_720P50:
+            case Exchange::IDeviceSettingsHDMIIn::DS_HDMIIN_PIXELRES_1280X720:
                 width = 1280; height = 720;  break;
-            case Exchange::IDeviceSettingsHDMIIn::DS_HDMIIN_RESOLUTION_1080I:
-            case Exchange::IDeviceSettingsHDMIIn::DS_HDMIIN_RESOLUTION_1080P:
-            case Exchange::IDeviceSettingsHDMIIn::DS_HDMIIN_RESOLUTION_1080P24:
-            case Exchange::IDeviceSettingsHDMIIn::DS_HDMIIN_RESOLUTION_1080I25:
-            case Exchange::IDeviceSettingsHDMIIn::DS_HDMIIN_RESOLUTION_1080P30:
-            case Exchange::IDeviceSettingsHDMIIn::DS_HDMIIN_RESOLUTION_1080I50:
-            case Exchange::IDeviceSettingsHDMIIn::DS_HDMIIN_RESOLUTION_1080P50:
-            case Exchange::IDeviceSettingsHDMIIn::DS_HDMIIN_RESOLUTION_1080P60:
+            case Exchange::IDeviceSettingsHDMIIn::DS_HDMIIN_PIXELRES_1366X768:
+                width = 1366; height = 768;  break;
+            case Exchange::IDeviceSettingsHDMIIn::DS_HDMIIN_PIXELRES_1920X1080:
                 width = 1920; height = 1080; break;
-            case Exchange::IDeviceSettingsHDMIIn::DS_HDMIIN_RESOLUTION_2160P24:
-            case Exchange::IDeviceSettingsHDMIIn::DS_HDMIIN_RESOLUTION_2160P25:
-            case Exchange::IDeviceSettingsHDMIIn::DS_HDMIIN_RESOLUTION_2160P30:
-            case Exchange::IDeviceSettingsHDMIIn::DS_HDMIIN_RESOLUTION_2160P50:
-            case Exchange::IDeviceSettingsHDMIIn::DS_HDMIIN_RESOLUTION_2160P60:
+            case Exchange::IDeviceSettingsHDMIIn::DS_HDMIIN_PIXELRES_3840X2160:
                 width = 3840; height = 2160; break;
+            case Exchange::IDeviceSettingsHDMIIn::DS_HDMIIN_PIXELRES_4096X2160:
+                width = 4096; height = 2160; break;
             default: width = 1920; height = 1080; break;
             }
             progressive = !resolution.interlaced;
