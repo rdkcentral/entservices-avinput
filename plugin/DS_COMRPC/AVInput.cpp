@@ -216,7 +216,8 @@ namespace Plugin {
                         hash["id"] = i;
                         std::stringstream locator;
                         locator << "hdmiin://localhost/deviceid/" << i;
-                        hash["connected"] = connected[static_cast<size_t>(i)];
+                        bool connectedBool = connected[static_cast<size_t>(i)];  // explicit bool: avoids std::vector<bool> proxy → "connected":0 (int) issue
+                        hash["connected"] = connectedBool;
                         hash["locator"] = locator.str();
                         LOGWARN("AVInputService::getInputDevices id %d, locator=[%s], connected=[%d]",
                             i, hash["locator"].String().c_str(), hash["connected"].Boolean());
@@ -284,7 +285,9 @@ namespace Plugin {
                 LOGWARN("Invalid Arguments");
                 returnResponse(false);
             }
-            response["devices"] = getInputDevices(iType);
+            JsonArray deviceArr = getInputDevices(iType);
+            response["devices"] = deviceArr;
+            response["deviceList"] = deviceArr;
         }
         else {
             JsonArray listHdmi = getInputDevices(INPUT_TYPE_INT_HDMI);
@@ -293,6 +296,7 @@ namespace Plugin {
                 listHdmi.Add(listComposite.Get(i));
             }
             response["devices"] = listHdmi;
+            response["deviceList"] = listHdmi;
         }
         returnResponse(true);
     }
