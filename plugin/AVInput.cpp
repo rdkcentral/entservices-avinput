@@ -163,20 +163,27 @@ namespace Plugin {
 
     JsonArray AVInput::getInputDevices(int iType)
     {
+        LOGINFO("getInputDevices: iType=%d", iType);
         JsonArray list;
         try
         {
             int num = 0;
             if (iType == INPUT_TYPE_INT_HDMI) {
                 num = device::HdmiInput::getInstance().getNumberOfInputs();
+                LOGINFO("getInputDevices: HDMI number of inputs=%d", num);
             }
             else if (iType == INPUT_TYPE_INT_COMPOSITE) {
                 num = device::CompositeInput::getInstance().getNumberOfInputs();
+                LOGINFO("getInputDevices: Composite number of inputs=%d", num);
+            }
+            else {
+                LOGWARN("getInputDevices: unknown iType=%d", iType);
             }
             if (num > 0) {
                 int i = 0;
                 for (i = 0; i < num; i++) {
                     //Input ID is aleays 0-indexed, continuous number starting 0
+                    LOGINFO("getInputDevices: processing device index=%d", i);
                     JsonObject hash;
                     hash["id"] = i;
                     std::stringstream locator;
@@ -193,10 +200,14 @@ namespace Plugin {
                     list.Add(hash);
                 }
             }
+            else {
+                LOGINFO("getInputDevices: no input devices found for iType=%d", iType);
+            }            
         }
         catch (const std::exception &e) {
             LOGWARN("AVInputService::getInputDevices Failed");
         }
+        LOGINFO("getInputDevices: returning %d device(s)", list.Length());
         return list;
     }
 
@@ -206,9 +217,11 @@ namespace Plugin {
 
         if (parameters.HasLabel("typeOfInput")) {
             string sType = parameters["typeOfInput"].String();
+            LOGINFO("getInputDevicesWrapper: typeOfInput=%s", sType.c_str());
             int iType = 0;
             try {
                 iType = AVInputUtils::getTypeOfInput(sType);
+                LOGINFO("getInputDevicesWrapper: resolved typeOfInput to iType=%d", iType);
             }catch (...) {
                 LOGWARN("Invalid Arguments");
                 returnResponse(false);
@@ -216,13 +229,18 @@ namespace Plugin {
             response["devices"] = getInputDevices(iType);
         }
         else {
+            LOGINFO("getInputDevicesWrapper: no typeOfInput specified, fetching all input types");
             JsonArray listHdmi = getInputDevices(INPUT_TYPE_INT_HDMI);
+            LOGINFO("getInputDevicesWrapper: HDMI devices count=%d", listHdmi.Length());
             JsonArray listComposite = getInputDevices(INPUT_TYPE_INT_COMPOSITE);
+            LOGINFO("getInputDevicesWrapper: Composite devices count=%d", listComposite.Length());
             for (int i = 0; i < listComposite.Length(); i++) {
                 listHdmi.Add(listComposite.Get(i));
             }
+            LOGINFO("getInputDevicesWrapper: total devices count=%d", listHdmi.Length());
             response["devices"] = listHdmi;
         }
+        LOGINFO("getInputDevicesWrapper: completed successfully");
         returnResponse(true);
     }
 
