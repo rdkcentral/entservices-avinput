@@ -37,7 +37,6 @@ static int planeType = 0;
 
 using namespace std;
 
-namespace DSHelper = WPEFramework::Plugin::DeviceSettingsClientHelper;
 namespace WPEFramework {
 namespace Plugin {
     SERVICE_REGISTRATION(AVInputImplementation, 1, 0);
@@ -69,7 +68,7 @@ namespace Plugin {
     }
 
     // =========================================================================
-    // DeviceSettingsClientHelper override: called when DeviceSettings activates
+    // DSHelper override: called when DeviceSettings activates
     // DS_IARM equivalent: device::Host::getInstance().Register(IHdmiInEvents)
     //                     device::Host::getInstance().Register(ICompositeInEvents)
     // =========================================================================
@@ -106,7 +105,7 @@ namespace Plugin {
     }
 
     // =========================================================================
-    // DeviceSettingsClientHelper override: called when DeviceSettings deactivates
+    // DSHelper override: called when DeviceSettings deactivates
     // DS_IARM equivalent: device::Host::getInstance().UnRegister(IHdmiInEvents)
     //                     device::Host::getInstance().UnRegister(ICompositeInEvents)
     // =========================================================================

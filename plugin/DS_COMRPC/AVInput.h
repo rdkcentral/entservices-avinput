@@ -32,7 +32,7 @@
 #include "UtilsLogging.h"
 #include "tracing/Logging.h"
 
-// COM-RPC path: DeviceSettingsInterface.h brings DeviceSettingsClientHelper
+// COM-RPC path: DeviceSettingsInterface.h brings DSHelper
 // and all DS sub-interface headers (IDeviceSettingsHDMIIn, IDeviceSettingsCompositeIn, ...).
 // Replaces DS_IARM includes: host.hpp, compositeIn.hpp, hdmiIn.hpp
 #include "DeviceSettingsInterface.h"
@@ -42,7 +42,7 @@ namespace Plugin {
 
     class AVInput: public PluginHost::IPlugin,
                    public PluginHost::JSONRPC,
-                   public DeviceSettingsClientHelper {
+                   public DSHelper {
     public:
 
         AVInput(const AVInput&) = delete;
@@ -172,14 +172,14 @@ namespace Plugin {
         JsonArray getInputDevices(int iType);
         uint32_t getInputDevicesWrapper(const JsonObject& parameters, JsonObject& response);
 
-        // COMRPC_TODO: AVInput inherits DeviceSettingsClientHelper solely to support
+        // COMRPC_TODO: AVInput inherits DSHelper solely to support
         // getInputDevices() / getInputDevicesWrapper() which call AcquireSubInterface<>()
         // directly from the plugin wrapper process. This is necessary in Thunder 4.x
         // because getInputDevicesWrapper is explicitly registered to work around missing
         // optional-parameter support (see AVINPUT_METHOD_GET_INPUT_DEVICES comment above).
         // Once this plugin migrates to Thunder 5.x (which supports optional parameters
         // natively via IAVInput autogeneration), getInputDevicesWrapper and getInputDevices
-        // can be removed from AVInput entirely, DeviceSettingsClientHelper inheritance can
+        // can be removed from AVInput entirely, DSHelper inheritance can
         // be dropped from AVInput, and AVInputImplementation alone will be sufficient.
         void OnDeviceSettingsActivated() override {}
         void OnDeviceSettingsDeactivated() override {}

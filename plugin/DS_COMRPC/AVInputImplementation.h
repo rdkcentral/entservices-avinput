@@ -23,7 +23,7 @@
 
 #include "UtilsJsonRpc.h"
 
-// COM-RPC path: DeviceSettingsInterface.h brings DeviceSettingsClientHelper
+// COM-RPC path: DeviceSettingsInterface.h brings DSHelper
 // and all DS sub-interface headers (IDeviceSettingsHDMIIn, IDeviceSettingsCompositeIn, ...).
 #include "DeviceSettingsInterface.h"
 
@@ -66,13 +66,13 @@ namespace Plugin {
     // and device::Host::ICompositeInEvents (libds callbacks) and called
     // device::HdmiInput / device::CompositeInput directly.
     //
-    // Inherits DeviceSettingsClientHelper to:
+    // Inherits DSHelper to:
     //   - Connect to the entservices-devicesettings plugin via COM-RPC
     //   - Acquire IDeviceSettingsHDMIIn / IDeviceSettingsCompositeIn sub-interfaces
     //   - Register inner notification delegate classes for events
     // =========================================================================
     class AVInputImplementation :   public Exchange::IAVInput,
-                                    public DeviceSettingsClientHelper {
+                                    public DSHelper {
 
     public:
 
@@ -241,7 +241,7 @@ namespace Plugin {
         Core::Sink<DSCompositeInNotification>   _DSCompositeInNotification;
 
         // =========================================================================
-        // DeviceSettingsClientHelper overrides
+        // DSHelper overrides
         // =========================================================================
         void OnDeviceSettingsActivated() override;
         void OnDeviceSettingsDeactivated() override;
