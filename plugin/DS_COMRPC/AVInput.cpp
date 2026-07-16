@@ -92,7 +92,7 @@ namespace Plugin {
             _avInput->Configure(service);
 
             // COM-RPC: open the DeviceSettings link so getInputDevices() can
-            // use AcquireSubInterface<IDeviceSettingsHDMIIn/CompositeIn>().
+            // use DSHelper::AcquireSubInterface<IDeviceSettingsHDMIIn/CompositeIn>().
             // OnDeviceSettingsActivated/Deactivated overrides are empty — AVInput
             // has no notification delegates to register; it queries on demand.
             DeviceSettingsClientHelper::Open(service);
@@ -180,7 +180,7 @@ namespace Plugin {
         {
             Core::hresult comResult = Core::ERROR_NONE;
             if (iType == INPUT_TYPE_INT_HDMI) {
-                auto* hdmiIn = AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
+                auto* hdmiIn = DSHelper::AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
                 if (hdmiIn != nullptr) {
                     int32_t num = 0;
                     comResult = hdmiIn->GetHDMIInNumberOfInputs(num);
@@ -230,7 +230,7 @@ namespace Plugin {
                 }
             }
             else if (iType == INPUT_TYPE_INT_COMPOSITE) {
-                auto* compositeIn = AcquireSubInterface<Exchange::IDeviceSettingsCompositeIn>();
+                auto* compositeIn = DSHelper::AcquireSubInterface<Exchange::IDeviceSettingsCompositeIn>();
                 if (compositeIn != nullptr) {
                     int32_t num = 0;
                     comResult = compositeIn->GetNrOfCompositeInputs(num);

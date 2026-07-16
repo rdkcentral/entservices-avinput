@@ -37,6 +37,7 @@ static int planeType = 0;
 
 using namespace std;
 
+namespace DSHelper = WPEFramework::Plugin::DeviceSettingsClientHelper;
 namespace WPEFramework {
 namespace Plugin {
     SERVICE_REGISTRATION(AVInputImplementation, 1, 0);
@@ -63,7 +64,7 @@ namespace Plugin {
         AVInputImplementation::_instance = nullptr;
 
         // COM-RPC: notifications are unregistered in Deinitialize() via
-        // DeviceSettingsClientHelper::Close() which calls OnDeviceSettingsDeactivated()
+        // DSHelper::Close() which calls OnDeviceSettingsDeactivated()
         _registeredDsEventHandlers = false;
     }
 
@@ -78,7 +79,7 @@ namespace Plugin {
 
         // Register HDMI-In notification delegate
         {
-            auto* hdmiIn = AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
+            auto* hdmiIn = DSHelper::AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
             if (hdmiIn != nullptr) {
                 hdmiIn->Register(&_DSHDMIInNotification);
                 hdmiIn->Release();
@@ -91,7 +92,7 @@ namespace Plugin {
 
         // Register Composite-In notification delegate
         {
-            auto* compositeIn = AcquireSubInterface<Exchange::IDeviceSettingsCompositeIn>();
+            auto* compositeIn = DSHelper::AcquireSubInterface<Exchange::IDeviceSettingsCompositeIn>();
             if (compositeIn != nullptr) {
                 compositeIn->Register(&_DSCompositeInNotification);
                 compositeIn->Release();
@@ -114,14 +115,14 @@ namespace Plugin {
         LOGINFO("AVInputImplementation: OnDeviceSettingsDeactivated — unregistering DS notifications");
 
         {
-            auto* hdmiIn = AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
+            auto* hdmiIn = DSHelper::AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
             if (hdmiIn != nullptr) {
                 hdmiIn->Unregister(&_DSHDMIInNotification);
                 hdmiIn->Release();
             }
         }
         {
-            auto* compositeIn = AcquireSubInterface<Exchange::IDeviceSettingsCompositeIn>();
+            auto* compositeIn = DSHelper::AcquireSubInterface<Exchange::IDeviceSettingsCompositeIn>();
             if (compositeIn != nullptr) {
                 compositeIn->Unregister(&_DSCompositeInNotification);
                 compositeIn->Release();
@@ -139,8 +140,8 @@ namespace Plugin {
         // DS_IARM equivalent: device::Manager::Initialize()
         // OnDeviceSettingsActivated() fires once DeviceSettings is ready,
         // which registers the HDMI-In and Composite-In notification delegates.
-        DeviceSettingsClientHelper::Open(service);
-        LOGINFO("AVInputImplementation: DeviceSettingsClientHelper::Open() called");
+        DSHelper::Open(service);
+        LOGINFO("AVInputImplementation: DSHelper::Open() called");
 
         return Core::ERROR_NONE;
     }
@@ -404,7 +405,7 @@ namespace Plugin {
     {
         // COM-RPC: device::HdmiInput::getInstance().getNumberOfInputs()
         //       → IDeviceSettingsHDMIIn::GetHDMIInNumberOfInputs()
-        auto* hdmiIn = AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
+        auto* hdmiIn = DSHelper::AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
         if (hdmiIn != nullptr) {
             int32_t count = 0;
             Core::hresult comResult = hdmiIn->GetHDMIInNumberOfInputs(count);
@@ -428,7 +429,7 @@ namespace Plugin {
     {
         // COM-RPC: device::HdmiInput::getInstance().getCurrentVideoMode()
         //       → IDeviceSettingsHDMIIn::GetHDMIVideoMode()
-        auto* hdmiIn = AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
+        auto* hdmiIn = DSHelper::AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
         if (hdmiIn != nullptr) {
             Exchange::IDeviceSettingsHDMIIn::HDMIVideoPortResolution vpRes{};
             Core::hresult comResult = hdmiIn->GetHDMIVideoMode(vpRes);
@@ -473,7 +474,7 @@ namespace Plugin {
         if (iType == INPUT_TYPE_INT_HDMI) {
             // COM-RPC: device::HdmiInput::getInstance().selectPort(id, requestAudioMix, plane, topMost)
             //       → IDeviceSettingsHDMIIn::SelectHDMIInPort()
-            auto* hdmiIn = AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
+            auto* hdmiIn = DSHelper::AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
             if (hdmiIn != nullptr) {
                 comResult = hdmiIn->SelectHDMIInPort(static_cast<Exchange::IDeviceSettingsHDMIIn::HDMIInPort>(id),
                                                         requestAudioMix,
@@ -497,7 +498,7 @@ namespace Plugin {
         } else if (iType == INPUT_TYPE_INT_COMPOSITE) {
             // COM-RPC: device::CompositeInput::getInstance().selectPort(id)
             //       → IDeviceSettingsCompositeIn::SelectCompositeInPort()
-            auto* compositeIn = AcquireSubInterface<Exchange::IDeviceSettingsCompositeIn>();
+            auto* compositeIn = DSHelper::AcquireSubInterface<Exchange::IDeviceSettingsCompositeIn>();
             if (compositeIn != nullptr) {
                 comResult = compositeIn->SelectCompositeInPort(static_cast<Exchange::IDeviceSettingsCompositeIn::CompositeInPort>(id));
                 if (comResult == Core::ERROR_NONE) {
@@ -530,7 +531,7 @@ namespace Plugin {
             if (isAudioBalanceSet) {
                 // COM-RPC: device::Host::getInstance().setAudioMixerLevels() — handle is NULL (0)
                 //       → IDeviceSettingsAudio::SetAudioMixerLevels(0, audioInput, volume)
-                auto* audio = AcquireSubInterface<Exchange::IDeviceSettingsAudio>();
+                auto* audio = DSHelper::AcquireSubInterface<Exchange::IDeviceSettingsAudio>();
                 if (audio != nullptr) {
                     comResult = audio->SetAudioMixerLevels(0, Exchange::IDeviceSettingsAudio::AUDIO_INPUT_PRIMARY, MAX_PRIM_VOL_LEVEL);
                     if (comResult != Core::ERROR_NONE) {
@@ -552,7 +553,7 @@ namespace Plugin {
                 case INPUT_TYPE_INT_HDMI: {
                     // COM-RPC: device::HdmiInput::getInstance().selectPort(-1)
                     //       → IDeviceSettingsHDMIIn::SelectHDMIInPort(DS_HDMI_IN_PORT_NONE)
-                    auto* hdmiIn = AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
+                    auto* hdmiIn = DSHelper::AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
                     if (hdmiIn != nullptr) {
                         comResult = hdmiIn->SelectHDMIInPort( Exchange::IDeviceSettingsHDMIIn::DS_HDMI_IN_PORT_NONE, 
                                                                 false,
@@ -574,7 +575,7 @@ namespace Plugin {
                 case INPUT_TYPE_INT_COMPOSITE: {
                     // COM-RPC: device::CompositeInput::getInstance().selectPort(-1)
                     //       → IDeviceSettingsCompositeIn::SelectCompositeInPort(DS_COMPOSITE_IN_PORT_NONE)
-                    auto* compositeIn = AcquireSubInterface<Exchange::IDeviceSettingsCompositeIn>();
+                    auto* compositeIn = DSHelper::AcquireSubInterface<Exchange::IDeviceSettingsCompositeIn>();
                     if (compositeIn != nullptr) {
                         comResult = compositeIn->SelectCompositeInPort(Exchange::IDeviceSettingsCompositeIn::DS_COMPOSITE_IN_PORT_NONE);
                         if (comResult != Core::ERROR_NONE) {
@@ -613,7 +614,7 @@ namespace Plugin {
         if (iType == INPUT_TYPE_INT_HDMI) {
             // COM-RPC: device::HdmiInput::getInstance().scaleVideo(x, y, w, h)
             //       → IDeviceSettingsHDMIIn::ScaleHDMIInVideo()
-            auto* hdmiIn = AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
+            auto* hdmiIn = DSHelper::AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
             if (hdmiIn != nullptr) {
                 Exchange::IDeviceSettingsHDMIIn::HDMIInVideoRectangle rect{};
                 rect.x = x; rect.y = y; rect.width = w; rect.height = h;
@@ -632,7 +633,7 @@ namespace Plugin {
         } else if (iType == INPUT_TYPE_INT_COMPOSITE) {
             // COM-RPC: device::CompositeInput::getInstance().scaleVideo(x, y, w, h)
             //       → IDeviceSettingsCompositeIn::ScaleCompositeInVideo()
-            auto* compositeIn = AcquireSubInterface<Exchange::IDeviceSettingsCompositeIn>();
+            auto* compositeIn = DSHelper::AcquireSubInterface<Exchange::IDeviceSettingsCompositeIn>();
             if (compositeIn != nullptr) {
                 Exchange::IDeviceSettingsCompositeIn::VideoRectangle rect{};
                 rect.x = x; rect.y = y; rect.width = w; rect.height = h;
@@ -671,7 +672,7 @@ namespace Plugin {
             switch(AVInputUtils::getTypeOfInput(typeOfInput)) {
                 case INPUT_TYPE_INT_HDMI: {
                     // COM-RPC: device::HdmiInput::getInstance().getNumberOfInputs()
-                    auto* hdmiIn = AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
+                    auto* hdmiIn = DSHelper::AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
                     if (nullptr != hdmiIn) {
                         comResult = hdmiIn->GetHDMIInNumberOfInputs(num);
                         if (comResult != Core::ERROR_NONE) {
@@ -687,7 +688,7 @@ namespace Plugin {
                 }
                 case INPUT_TYPE_INT_COMPOSITE: {
                     // COM-RPC: device::CompositeInput::getInstance().getNumberOfInputs()
-                    auto* compositeIn = AcquireSubInterface<Exchange::IDeviceSettingsCompositeIn>();
+                    auto* compositeIn = DSHelper::AcquireSubInterface<Exchange::IDeviceSettingsCompositeIn>();
                     if (nullptr != compositeIn) {
                         comResult = compositeIn->GetNrOfCompositeInputs(num);
                         if (comResult != Core::ERROR_NONE) {
@@ -717,7 +718,7 @@ namespace Plugin {
                 //          GetCompositeInStatus().isPort0/1Connected
                 std::vector<bool> connected(static_cast<size_t>(num), false);
                 if (isHdmi) {
-                    auto* hdmiIn = AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
+                    auto* hdmiIn = DSHelper::AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
                     if (hdmiIn != nullptr) {
                         Exchange::IDeviceSettingsHDMIIn::HDMIInStatus hdmiStatus{};
                         Exchange::IDeviceSettingsHDMIIn::IHDMIInPortConnectionStatusIterator* portIter = nullptr;
@@ -742,7 +743,7 @@ namespace Plugin {
                         hdmiIn->Release();
                     }
                 } else {
-                    auto* compositeIn = AcquireSubInterface<Exchange::IDeviceSettingsCompositeIn>();
+                    auto* compositeIn = DSHelper::AcquireSubInterface<Exchange::IDeviceSettingsCompositeIn>();
                     if (compositeIn != nullptr) {
                         Exchange::IDeviceSettingsCompositeIn::CompositeInStatus status{};
                         comResult = compositeIn->GetCompositeInStatus(status);
@@ -848,7 +849,7 @@ namespace Plugin {
             return Core::ERROR_NONE;
         }
 
-        auto* hdmiIn = AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
+        auto* hdmiIn = DSHelper::AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
         if (hdmiIn != nullptr) {
             Core::hresult comResult = Core::ERROR_NONE;
             constexpr uint16_t kEdidMaxLen = 256;
@@ -1224,7 +1225,7 @@ namespace Plugin {
         features = nullptr;
         std::vector<std::string> supportedFeatures;
 
-        auto* hdmiIn = AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
+        auto* hdmiIn = DSHelper::AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
         if (hdmiIn != nullptr) {
             Exchange::IDeviceSettingsHDMIIn::IHDMIInGameFeatureListIterator* iter = nullptr;
             Core::hresult comResult = Core::ERROR_NONE;
@@ -1296,7 +1297,7 @@ namespace Plugin {
         // COM-RPC: device::HdmiInput::getInstance().getHdmiALLMStatus(iPort, &allm)
         //       → IDeviceSettingsHDMIIn::GetHDMIInAllmStatus()
         bool allm = false;
-        auto* hdmiIn = AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
+        auto* hdmiIn = DSHelper::AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
         if (hdmiIn != nullptr) {
             Core::hresult comResult = Core::ERROR_NONE;
             comResult = hdmiIn->GetHDMIInAllmStatus(static_cast<Exchange::IDeviceSettingsHDMIIn::HDMIInPort>(iPort),allm);
@@ -1316,7 +1317,7 @@ namespace Plugin {
         // COM-RPC: device::HdmiInput::getInstance().getVRRStatus(iPort, vrrStatus)
         //       → IDeviceSettingsHDMIIn::GetVRRStatus()
         bool ret = false;
-        auto* hdmiIn = AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
+        auto* hdmiIn = DSHelper::AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
         if (hdmiIn != nullptr) {
             Core::hresult comResult = Core::ERROR_NONE;
             comResult = hdmiIn->GetVRRStatus(
@@ -1378,7 +1379,7 @@ namespace Plugin {
             LOGWARN("AVInputImplementation::getSPDInfo");
             // COM-RPC: device::HdmiInput::getInstance().getHDMISPDInfo(id, spdVect2)
             //       \u2192 IDeviceSettingsHDMIIn::GetHDMISPDInformation()
-            auto* hdmiIn = AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
+            auto* hdmiIn = DSHelper::AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
             if (hdmiIn == nullptr) {
                 success = false;
                 LOGERR("IDeviceSettingsHDMIIn not available");
@@ -1445,7 +1446,7 @@ namespace Plugin {
         try {
             // COM-RPC: device::HdmiInput::getInstance().getHDMISPDInfo(id, spdVect2)
             //       \u2192 IDeviceSettingsHDMIIn::GetHDMISPDInformation()
-            auto* hdmiIn = AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
+            auto* hdmiIn = DSHelper::AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
             if (hdmiIn == nullptr) {
                 success = false;
                 LOGERR("IDeviceSettingsHDMIIn not available");
@@ -1534,7 +1535,7 @@ namespace Plugin {
             // COM-RPC: device::Host::getInstance().setAudioMixerLevels(dsAUDIO_INPUT_PRIMARY/SYSTEM, vol)
             //       → IDeviceSettingsAudio::SetAudioMixerLevels(0, audioInput, volume)
             //       handle=0 because DS_IARM passes NULL to HAL (not port-specific)
-            auto* audio = AcquireSubInterface<Exchange::IDeviceSettingsAudio>();
+            auto* audio = DSHelper::AcquireSubInterface<Exchange::IDeviceSettingsAudio>();
             if (audio == nullptr) {
                 LOGERR("IDeviceSettingsAudio not available");
                 successResult.success = false;
@@ -1575,7 +1576,7 @@ namespace Plugin {
             return Core::ERROR_NONE;
         }
 
-        auto* hdmiIn = AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
+        auto* hdmiIn = DSHelper::AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
         if (hdmiIn != nullptr) {
             Core::hresult comResult = Core::ERROR_NONE;
             comResult = hdmiIn->SetHDMIInEdid2AllmSupport(
@@ -1609,7 +1610,7 @@ namespace Plugin {
             return Core::ERROR_NONE;
         }
 
-        auto* hdmiIn = AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
+        auto* hdmiIn = DSHelper::AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
         if (hdmiIn != nullptr) {
             Core::hresult comResult = Core::ERROR_NONE;
             comResult = hdmiIn->GetHDMIInEdid2AllmSupport(
@@ -1643,7 +1644,7 @@ namespace Plugin {
             return Core::ERROR_NONE;
         }
 
-        auto* hdmiIn = AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
+        auto* hdmiIn = DSHelper::AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
         if (hdmiIn != nullptr) {
             Core::hresult comResult = Core::ERROR_NONE;
             comResult = hdmiIn->GetVRRSupport(
@@ -1677,7 +1678,7 @@ namespace Plugin {
             return Core::ERROR_NONE;
         }
 
-        auto* hdmiIn = AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
+        auto* hdmiIn = DSHelper::AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
         if (hdmiIn != nullptr) {
             Core::hresult comResult = Core::ERROR_NONE;
             comResult = hdmiIn->SetVRRSupport(
@@ -1711,7 +1712,7 @@ namespace Plugin {
             return Core::ERROR_NONE;
         }
 
-        auto* hdmiIn = AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
+        auto* hdmiIn = DSHelper::AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
         if (hdmiIn != nullptr) {
             Exchange::IDeviceSettingsHDMIIn::HDMIInCapabilityVersion capVer = Exchange::IDeviceSettingsHDMIIn::HDMI_COMPATIBILITY_VERSION_14;
             Core::hresult comResult = Core::ERROR_NONE;
@@ -1766,7 +1767,7 @@ namespace Plugin {
             return Core::ERROR_NONE;
         }
 
-        auto* hdmiIn = AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
+        auto* hdmiIn = DSHelper::AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
         if (hdmiIn != nullptr) {
             Core::hresult comResult = Core::ERROR_NONE;
             comResult = hdmiIn->SetHDMIEdidVersion(
@@ -1800,7 +1801,7 @@ namespace Plugin {
             return Core::ERROR_NONE;
         }
 
-        auto* hdmiIn = AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
+        auto* hdmiIn = DSHelper::AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
         if (hdmiIn != nullptr) {
             Exchange::IDeviceSettingsHDMIIn::HDMIInEdidVersion ver = Exchange::IDeviceSettingsHDMIIn::HDMI_EDID_VER_14;
             Core::hresult comResult = Core::ERROR_NONE;
@@ -1835,7 +1836,7 @@ namespace Plugin {
         //       → IDeviceSettingsAudio::GetAudioHDMIARCPortId() (via Audio sub-interface)
         // Note: ARCPortId is a property of the HDMI_ARC0 audio port, not the HDMIIn interface.
         // We use IDeviceSettingsAudio which already has GetAudioHDMIARCPortId().
-        auto* audio = AcquireSubInterface<Exchange::IDeviceSettingsAudio>();
+        auto* audio = DSHelper::AcquireSubInterface<Exchange::IDeviceSettingsAudio>();
         if (audio != nullptr) {
             // Find HDMI_ARC0 port handle — iterate audio ports to find it
             // For simplicity, use handle 0 (caller must have audio port handles cached)
