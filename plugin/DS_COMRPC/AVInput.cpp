@@ -95,7 +95,7 @@ namespace Plugin {
             // use DSHelper::AcquireSubInterface<IDeviceSettingsHDMIIn/CompositeIn>().
             // OnDeviceSettingsActivated/Deactivated overrides are empty — AVInput
             // has no notification delegates to register; it queries on demand.
-            DeviceSettingsClientHelper::Open(service);
+            DSHelper::Open(service);
 
             // Invoking Plugin API register to wpeframework
             Exchange::JAVInput::Register(*this, _avInput);
@@ -128,7 +128,7 @@ namespace Plugin {
             Exchange::JAVInput::Unregister(*this);
 
             // COM-RPC: close the DeviceSettings link
-            DeviceSettingsClientHelper::Close();
+            DSHelper::Close();
 
             // Stop processing:
             RPC::IRemoteConnection* connection = service->RemoteConnection(_connectionId);
