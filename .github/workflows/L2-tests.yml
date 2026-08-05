@@ -10,6 +10,8 @@ on:
 
 env:
   BUILD_TYPE: Debug
+  THUNDER_TOOLS_COMMIT_SHA: "d5dd83c7c19c49c7f25c558c126500bd2d64f7a4"
+  THUNDER_COMMIT_SHA: "2c0fcc5529e7da734be558ca6efa05d934dcce31"
   THUNDER_REF: "R4.4.6"
   INTERFACES_REF: "develop"
   AUTOMATICS_UNAME: ${{ secrets.AUTOMATICS_UNAME}}
@@ -76,14 +78,14 @@ jobs:
         with:
           repository: rdkcentral/Thunder
           path: Thunder
-          ref: ${{env.THUNDER_REF}}
+          ref: ${{env.THUNDER_COMMIT_SHA}}
 
       - name: Checkout ThunderTools
         uses: actions/checkout@v3
         with:
           repository: rdkcentral/ThunderTools
           path: ThunderTools
-          ref: R4.4.6
+          ref: ${{env.THUNDER_TOOLS_COMMIT_SHA}}
 
       - name: Checkout entservices-deviceanddisplay
         uses: actions/checkout@v3

@@ -11,6 +11,8 @@ on:
 env:
   BUILD_TYPE: Debug
   REPO_NAME: "avinput"
+  THUNDER_TOOLS_COMMIT_SHA: "d5dd83c7c19c49c7f25c558c126500bd2d64f7a4"
+  THUNDER_COMMIT_SHA: "2c0fcc5529e7da734be558ca6efa05d934dcce31"
   THUNDER_REF: "R4.4.6"
   INTERFACES_REF: "develop"
   AUTOMATICS_UNAME: ${{ secrets.AUTOMATICS_UNAME}}
@@ -63,7 +65,7 @@ jobs:
             !install/usr/lib/pkgconfig/gtest.pc
             !install/usr/lib/pkgconfig/gtest_main.pc
             !install/usr/lib/wpeframework/plugins
-          key: ${{ runner.os }}-${{ env.REPO_NAME }}-${{ env.THUNDER_REF }}-${{ env.INTERFACES_REF }}-4
+          key: ${{ runner.os }}-${{ env.REPO_NAME }}-${{ env.THUNDER_COMMIT_SHA }}-${{ env.INTERFACES_REF }}-4
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -107,7 +109,7 @@ jobs:
         with:
           repository: rdkcentral/Thunder
           path: Thunder
-          ref: ${{env.THUNDER_REF}}
+          ref: ${{env.THUNDER_COMMIT_SHA}}
 
       - name: Checkout ThunderTools
         if: steps.cache.outputs.cache-hit != 'true'
@@ -115,7 +117,7 @@ jobs:
         with:
           repository: rdkcentral/ThunderTools
           path: ThunderTools
-          ref: R4.4.6
+          ref: ${{env.THUNDER_TOOLS_COMMIT_SHA}}
 
       - name: Checkout entservices-testframework
         uses: actions/checkout@v3
