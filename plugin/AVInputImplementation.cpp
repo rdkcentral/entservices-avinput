@@ -991,17 +991,17 @@ namespace Plugin {
 
     void AVInputImplementation::OnHdmiInAllmStatus(dsHdmiInPort_t port, bool allmStatus)
     {
-        LOGINFO("Received OnHdmiInAllmStatus callback, port: %d, ALLM Mode: %s",
+        LOGERR("Skipping OnHdmiInAllmStatus callback, port: %d, ALLM Mode: %s",
                 port, allmStatus ? "true" : "false");
 
-        AVInputImplementation::AVInputALLMChange(port, allmStatus);
+        //AVInputImplementation::AVInputALLMChange(port, allmStatus);
     }
 
     void AVInputImplementation::OnHdmiInVRRStatus(dsHdmiInPort_t port, dsVRRType_t vrrType)
     {
-        LOGINFO("Received OnHdmiInVRRStatus callback, port: %d, VRR Type: %d",
+        LOGERR("skipping OnHdmiInVRRStatus callback, port: %d, VRR Type: %d",
                 port, vrrType);
-
+		/*
         if (!AVInputImplementation::_instance)
             return;
 
@@ -1018,6 +1018,7 @@ namespace Plugin {
         }
 
         m_currentVrrType = vrrType;
+		*/
     }
 
 
