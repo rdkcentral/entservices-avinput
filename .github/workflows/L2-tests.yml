@@ -756,7 +756,6 @@ jobs:
           '*/install/usr/include/*'
           '*/Tests/headers/*'
           '*/Tests/mocks/*'
-          '*/Tests/L2Tests/*'
           '*/sqlite/*'
           -o filtered_coverage.info
           &&
