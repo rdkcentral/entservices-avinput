@@ -756,7 +756,7 @@ jobs:
           '*/install/usr/include/*'
           '*/Tests/headers/*'
           '*/Tests/mocks/*'
-          '*/Tests/L2Tests/*'
+          # '*/Tests/L2Tests/*'  // Disabling it because as of now no L2 Test is running
           '*/sqlite/*'
           -o filtered_coverage.info
           &&
