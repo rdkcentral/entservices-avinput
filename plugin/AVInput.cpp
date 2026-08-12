@@ -163,15 +163,18 @@ namespace Plugin {
 
     JsonArray AVInput::getInputDevices(int iType)
     {
+	    LOGWARN("getInputDevices iType : %d ",iType);
         JsonArray list;
         try
         {
             int num = 0;
             if (iType == INPUT_TYPE_INT_HDMI) {
                 num = device::HdmiInput::getInstance().getNumberOfInputs();
+	    LOGWARN("getInputDevices hdmi num : %d ",num);
             }
             else if (iType == INPUT_TYPE_INT_COMPOSITE) {
                 num = device::CompositeInput::getInstance().getNumberOfInputs();
+	    LOGWARN("getInputDevices composite  num : %d ",num);
             }
             if (num > 0) {
                 int i = 0;
@@ -213,6 +216,7 @@ namespace Plugin {
                 LOGWARN("Invalid Arguments");
                 returnResponse(false);
             }
+	    LOGWARN("getInputDevices calling for iType : %d ",iType);
             response["devices"] = getInputDevices(iType);
         }
         else {
