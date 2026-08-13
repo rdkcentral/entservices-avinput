@@ -113,7 +113,7 @@ jobs:
         with:
           repository: rdkcentral/entservices-testframework
           path: entservices-testframework
-          ref: 2.0.0
+          ref: feature/RDKEMW-23071-Thunder
 
       - name: Checkout googletest
         if: steps.cache.outputs.cache-hit != 'true'
@@ -155,6 +155,13 @@ jobs:
           cmake --build build/Thunder -j8
           &&
           cmake --install build/Thunder
+
+      - name: Apply patches Thunder
+        run: |
+          cd $GITHUB_WORKSPACE/Thunder
+          patch -p1 < $GITHUB_WORKSPACE/entservices-testframework/patches/1004-R4_4-RDK-Add-support-for-project-dir.patch
+          patch -p1 < $GITHUB_WORKSPACE/entservices-testframework/patches/Increase_Timout_For_L2Tests_Plugin_R4_4-RDK.patch
+          cd -
 
       - name: Checkout entservices-apis
         uses: actions/checkout@v3
@@ -756,7 +763,7 @@ jobs:
           '*/install/usr/include/*'
           '*/Tests/headers/*'
           '*/Tests/mocks/*'
-          # '*/Tests/L2Tests/*'  // Disabling it because as of now no L2 Test is running
+          '*/Tests/L2Tests/*'
           '*/sqlite/*'
           -o filtered_coverage.info
           &&
