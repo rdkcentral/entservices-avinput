@@ -137,6 +137,13 @@ jobs:
           &&
           cmake --install build/ThunderTools
 
+      - name: Apply patches Thunder
+        run: |
+          cd $GITHUB_WORKSPACE/Thunder
+          patch -p1 < $GITHUB_WORKSPACE/entservices-testframework/patches/1004-R4_4-RDK-Add-support-for-project-dir.patch
+          patch -p1 < $GITHUB_WORKSPACE/entservices-testframework/patches/Increase_Timout_For_L2Tests_Plugin_R4_4-RDK.patch
+          cd -
+
       - name: Build Thunder
         run: >
           cmake
@@ -155,13 +162,6 @@ jobs:
           cmake --build build/Thunder -j8
           &&
           cmake --install build/Thunder
-
-      - name: Apply patches Thunder
-        run: |
-          cd $GITHUB_WORKSPACE/Thunder
-          patch -p1 < $GITHUB_WORKSPACE/entservices-testframework/patches/1004-R4_4-RDK-Add-support-for-project-dir.patch
-          patch -p1 < $GITHUB_WORKSPACE/entservices-testframework/patches/Increase_Timout_For_L2Tests_Plugin_R4_4-RDK.patch
-          cd -
 
       - name: Checkout entservices-apis
         uses: actions/checkout@v3
