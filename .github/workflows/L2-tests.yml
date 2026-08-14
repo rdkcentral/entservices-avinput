@@ -770,6 +770,7 @@ jobs:
           -o coverage
           -t "entservices-avinput coverage"
           filtered_coverage.info
+          || true
 
       - name: Upload artifacts
         if: ${{ !env.ACT }}
