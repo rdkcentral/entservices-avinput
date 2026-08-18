@@ -766,10 +766,11 @@ jobs:
           '*/sqlite/*'
           -o filtered_coverage.info
           &&
-          genhtml
+          { genhtml
           -o coverage
           -t "entservices-avinput coverage"
           filtered_coverage.info
+          || true; }            # Ignore an empty filtered coverage report as L2Testfile is not Present 
 
       - name: Upload artifacts
         if: ${{ !env.ACT }}
