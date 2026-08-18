@@ -24,6 +24,7 @@
 
 #include "UtilsJsonRpc.h"
 
+
 #define API_VERSION_NUMBER_MAJOR 1
 #define API_VERSION_NUMBER_MINOR 7
 #define API_VERSION_NUMBER_PATCH 1
