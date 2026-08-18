@@ -750,6 +750,7 @@ jobs:
           lcov -c
           -o coverage.info
           -d build/entservices-avinput
+          --ignore-errors mismatch,empty
           &&
           lcov
           -r coverage.info
