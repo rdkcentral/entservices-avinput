@@ -766,11 +766,11 @@ jobs:
           '*/sqlite/*'
           -o filtered_coverage.info
           &&
-          genhtml
+          { genhtml
           -o coverage
           -t "entservices-avinput coverage"
           filtered_coverage.info
-          || true
+          || true; }
 
       - name: Upload artifacts
         if: ${{ !env.ACT }}
