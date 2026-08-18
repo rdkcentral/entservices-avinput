@@ -300,10 +300,10 @@ namespace Plugin {
             // Update only the cache(s) for the type(s) present in this event
             _parent._deviceCacheLock.Lock();
             if (newHdmi.Length() > 0) {
-                _parent._cachedHdmiDevices = newHdmi;
+                _parent._cachedHdmiDevices = std::move(newHdmi);
             }
             if (newComposite.Length() > 0) {
-                _parent._cachedCompositeDevices = newComposite;
+                _parent._cachedCompositeDevices = std::move(newComposite);
             }
             _parent._deviceCacheLock.Unlock();
 
