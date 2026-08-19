@@ -162,9 +162,14 @@ namespace Plugin {
 
         Core::Sink<Notification> _avInputNotification;
 
+        mutable Core::CriticalSection _deviceCacheLock;
+        JsonArray _cachedHdmiDevices;
+        JsonArray _cachedCompositeDevices;
+
         void Deactivated(RPC::IRemoteConnection* connection);
 
         JsonArray getInputDevices(int iType);
+        void refreshDeviceCache();
         uint32_t getInputDevicesWrapper(const JsonObject& parameters, JsonObject& response);
 
     }; // AVInput
