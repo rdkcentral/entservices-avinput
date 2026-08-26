@@ -48,7 +48,7 @@
 #define DEFAULT_INPUT_VOL_LEVEL 100
 
 using ParamsType = boost::variant<
-    WPEFramework::Exchange::IAVInput::IInputDeviceIterator* const,  // OnDevicesChanged
+    std::tuple<int, int, int>,                                      // OnDevicesChanged (input, connect, type)
     std::tuple<int, string, string>,                                // OnSignalChanged
     std::tuple<int, string, string, int>,                           // OnInputStatusChanged
     std::tuple<int, string, int, int, bool, int, int>,              // VideoStreamInfoUpdate
