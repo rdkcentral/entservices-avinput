@@ -80,7 +80,7 @@ namespace Plugin {
         {
             auto* hdmiIn = DSHelper::AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
             if (hdmiIn != nullptr) {
-                hdmiIn->Register(&_DSHDMIInNotification);
+                hdmiIn->Register("AVInput", &_DSHDMIInNotification);
                 hdmiIn->Release();
                 LOGINFO("AVInputImplementation: IDeviceSettingsHDMIIn::INotification registered");
             }
@@ -93,7 +93,7 @@ namespace Plugin {
         {
             auto* compositeIn = DSHelper::AcquireSubInterface<Exchange::IDeviceSettingsCompositeIn>();
             if (compositeIn != nullptr) {
-                compositeIn->Register(&_DSCompositeInNotification);
+                compositeIn->Register("AVInput", &_DSCompositeInNotification);
                 compositeIn->Release();
                 LOGINFO("AVInputImplementation: IDeviceSettingsCompositeIn::INotification registered");
                 _registeredDsEventHandlers = true;
@@ -286,14 +286,38 @@ namespace Plugin {
         switch (event) {
         case ON_AVINPUT_DEVICES_CHANGED: {
 
-            if (auto* const devices = boost::get<Exchange::IAVInput::IInputDeviceIterator* const>(&params)) {
-                LOGINFO("ON_AVINPUT_DEVICES_CHANGED");
+            if (const auto* t = boost::get<std::tuple<int, int, int>>(&params)) {
+                int input = std::get<0>(*t);
+                int connect = std::get<1>(*t);
+                int type = std::get<2>(*t);
+                LOGINFO("ON_AVINPUT_DEVICES_CHANGED [%d, %d, %d]", input, connect, type);
 
-                std::list<IAVInput::IDevicesChangedNotification*>::const_iterator index(_devicesChangedNotifications.begin());
+                string typeOfInput;
+                bool validType = true;
+                try {
+                    typeOfInput = AVInputUtils::getTypeOfInput(type);
+                } catch (...) {
+                    LOGERR("ON_AVINPUT_DEVICES_CHANGED: Invalid input type %d", type);
+                    validType = false;
+                }
 
-                while (index != _devicesChangedNotifications.end()) {
-                    (*index)->OnDevicesChanged(*devices);
-                    ++index;
+                if (validType) {
+                    IInputDeviceIterator* devices = nullptr;
+                    bool success = false;
+
+                    _adminLock.Unlock();
+                    Core::hresult result = GetInputDevices(typeOfInput, devices, success);
+                    _adminLock.Lock();
+
+                    if (Core::ERROR_NONE == result) {
+                        std::list<IAVInput::IDevicesChangedNotification*>::const_iterator index(_devicesChangedNotifications.begin());
+                        while (index != _devicesChangedNotifications.end()) {
+                            (*index)->OnDevicesChanged(devices);
+                            ++index;
+                        }
+                    } else {
+                        LOGERR("ON_AVINPUT_DEVICES_CHANGED [%d, %d, %d]: Failed to get devices", input, connect, type);
+                    }
                 }
             }
             break;
@@ -876,26 +900,8 @@ namespace Plugin {
     void AVInputImplementation::AVInputHotplug(int input, int connect, int type)
     {
         LOGWARN("AVInputHotplug [%d, %d, %d]", input, connect, type);
-
-        IInputDeviceIterator* devices;
-        bool success;
-
-        string typeOfInput;
-
-        try {
-            typeOfInput = AVInputUtils::getTypeOfInput(type);
-        } catch(...) {
-            LOGERR("AVInputHotplug: Invalid input type");
-            return;
-        }
-
-        Core::hresult result = GetInputDevices(typeOfInput, devices, success);
-        if (Core::ERROR_NONE != result) {
-            LOGERR("AVInputHotplug [%d, %d, %d]: Failed to get devices", input, connect, type);
-            return;
-        }
-
-        ParamsType params = devices;
+        // Defer COMRPC (GetInputDevices) to the worker thread via Dispatch.
+        ParamsType params = std::make_tuple(input, connect, type);
         dispatchEvent(ON_AVINPUT_DEVICES_CHANGED, params);
     }
 
