@@ -95,7 +95,7 @@ namespace Plugin {
             // use DSHelper::AcquireSubInterface<IDeviceSettingsHDMIIn/CompositeIn>().
             // OnDeviceSettingsActivated/Deactivated overrides are empty — AVInput
             // has no notification delegates to register; it queries on demand.
-            DSHelper::Open(service);
+            DSHelper::Open(service, "AVInput");
 
             // Invoking Plugin API register to wpeframework
             Exchange::JAVInput::Register(*this, _avInput);
