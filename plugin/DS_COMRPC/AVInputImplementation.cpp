@@ -139,8 +139,7 @@ namespace Plugin {
         // DS_IARM equivalent: device::Manager::Initialize()
         // OnDeviceSettingsActivated() fires once DeviceSettings is ready,
         // which registers the HDMI-In and Composite-In notification delegates.
-        DSHelper::Open(service);
-        LOGINFO("AVInputImplementation: DSHelper::Open() called");
+        DSHelper::Open(service, "AVInputImpl");
 
         return Core::ERROR_NONE;
     }
