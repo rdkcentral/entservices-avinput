@@ -379,6 +379,8 @@ namespace Plugin {
     {
         int id;
 
+        LOGINFO("StartInput: portId[%s] typeOfInput[%s] requestAudioMix[%s] plane[%d] topMost[%s]",
+                portId.c_str(), typeOfInput.c_str(), requestAudioMix ? "true" : "false", plane, topMost ? "true" : "false");
         try {
             id = stoi(portId);
         } catch (const std::exception& err) {
@@ -411,13 +413,12 @@ namespace Plugin {
             }
             planeType = plane;
         } catch(...) {
+            LOGWARN("Exception caught returning Success as false");
             successResult.success = false;
             return Core::ERROR_NONE;
         }
 
         successResult.success = true;
-        LOGINFO("StartInput: portId[%s] typeOfInput[%s] requestAudioMix[%s] plane[%d] topMost[%s]", 
-                portId.c_str(), typeOfInput.c_str(), requestAudioMix ? "true" : "false", plane, topMost ? "true" : "false");
         return Core::ERROR_NONE;
     }
 
@@ -450,6 +451,9 @@ namespace Plugin {
                     return Core::ERROR_NONE;
                 }
             }
+        } catch(const std::invalid_argument& e) {
+            LOGWARN("StopInput: Invalid input type: %s", e.what());
+            successResult.success = false;
         } catch(...) {
             LOGWARN("AVInputImplementation::StopInput Failed");
             successResult.success = false;
