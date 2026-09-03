@@ -97,6 +97,8 @@ namespace Plugin {
             // has no notification delegates to register; it queries on demand.
             DSHelper::Open(service, "AVInput");
 
+            refreshDeviceCache();
+
             // Invoking Plugin API register to wpeframework
             Exchange::JAVInput::Register(*this, _avInput);
         } else {
@@ -272,6 +274,17 @@ namespace Plugin {
         return list;
     }
 
+    void AVInput::refreshDeviceCache()
+    {
+        JsonArray hdmi = getInputDevices(INPUT_TYPE_INT_HDMI);
+        JsonArray composite = getInputDevices(INPUT_TYPE_INT_COMPOSITE);
+        _deviceCacheLock.Lock();
+        _cachedHdmiDevices = hdmi;
+        _cachedCompositeDevices = composite;
+        _deviceCacheLock.Unlock();
+        LOGINFO("AVInput::refreshDeviceCache: cached %d HDMI, %d composite devices", hdmi.Length(), composite.Length());
+    }
+
     uint32_t AVInput::getInputDevicesWrapper(const JsonObject& parameters, JsonObject& response)
     {
         LOGINFOMETHOD();
@@ -285,18 +298,32 @@ namespace Plugin {
                 LOGWARN("Invalid Arguments");
                 returnResponse(false);
             }
-            JsonArray deviceArr = getInputDevices(iType);
-            response["devices"] = deviceArr;
-            response["deviceList"] = deviceArr;
+            _deviceCacheLock.Lock();
+            if (iType == INPUT_TYPE_INT_HDMI) {
+                response["devices"] = _cachedHdmiDevices;
+                response["deviceList"] = _cachedHdmiDevices;
+            } else if (iType == INPUT_TYPE_INT_COMPOSITE) {
+                response["devices"] = _cachedCompositeDevices;
+                response["deviceList"] = _cachedCompositeDevices;
+            } else {
+                // Fallback: query live for unrecognised types
+                _deviceCacheLock.Unlock();
+                JsonArray deviceArr = getInputDevices(iType);
+                response["devices"] = deviceArr;
+                response["deviceList"] = deviceArr;
+                returnResponse(true);
+            }
+            _deviceCacheLock.Unlock();
         }
         else {
-            JsonArray listHdmi = getInputDevices(INPUT_TYPE_INT_HDMI);
-            JsonArray listComposite = getInputDevices(INPUT_TYPE_INT_COMPOSITE);
-            for (int i = 0; i < listComposite.Length(); i++) {
-                listHdmi.Add(listComposite.Get(i));
+            _deviceCacheLock.Lock();
+            JsonArray combined = _cachedHdmiDevices;
+            for (int i = 0; i < _cachedCompositeDevices.Length(); i++) {
+                combined.Add(_cachedCompositeDevices.Get(i));
             }
-            response["devices"] = listHdmi;
-            response["deviceList"] = listHdmi;
+            _deviceCacheLock.Unlock();
+            response["devices"] = combined;
+            response["deviceList"] = combined;
         }
         returnResponse(true);
     }
@@ -326,11 +353,37 @@ namespace Plugin {
                 JsonArray emptyArray;
                 params["devices"] = emptyArray;
                 _parent.Notify(_T("onDevicesChanged"), params);
+                _parent.refreshDeviceCache();
                 return;
             }
 
+            // Build event payload and simultaneously update type-specific caches
+            JsonArray newHdmi;
+            JsonArray newComposite;
             Core::JSON::ArrayType<InputDeviceJson> deviceArray;
-            while (devices->Next(resultItem) == true) { deviceArray.Add() = resultItem; }
+            while (devices->Next(resultItem) == true) {
+                deviceArray.Add() = resultItem;
+                JsonObject entry;
+                entry["id"] = resultItem.id;
+                entry["locator"] = resultItem.locator;
+                entry["connected"] = resultItem.connected;
+                if (resultItem.locator.find("hdmiin://") == 0) {
+                    newHdmi.Add(entry);
+                } else if (resultItem.locator.find("cvbsin://") == 0) {
+                    newComposite.Add(entry);
+                }
+            }
+
+            // Update only the cache(s) for the type(s) present in this event
+            _parent._deviceCacheLock.Lock();
+            if (newHdmi.Length() > 0) {
+                _parent._cachedHdmiDevices = std::move(newHdmi);
+            }
+            if (newComposite.Length() > 0) {
+                _parent._cachedCompositeDevices = std::move(newComposite);
+            }
+            _parent._deviceCacheLock.Unlock();
+
             eventPayload.Add(_T("devices"), &deviceArray);
             _parent.Notify(_T("onDevicesChanged"), eventPayload);
         }
