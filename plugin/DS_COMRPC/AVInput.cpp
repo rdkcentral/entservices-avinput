@@ -1,0 +1,388 @@
+/**
+ * If not stated otherwise in this file or this component's LICENSE
+ * file the following copyright and licenses apply:
+ *
+ * Copyright 2025 RDK Management
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ **/
+
+#include "AVInput.h"
+
+#include "UtilsJsonRpc.h"
+
+#define API_VERSION_NUMBER_MAJOR 1
+#define API_VERSION_NUMBER_MINOR 7
+#define API_VERSION_NUMBER_PATCH 1
+
+// Explicitly implementing getInputDevices method instead of autogenerating via
+// IAVInput.h because it requires optional parameters which are not supported in
+// Thunder 4.x. This can be refactored after migrating to 5.x.
+#define AVINPUT_METHOD_GET_INPUT_DEVICES "getInputDevices"
+
+namespace WPEFramework {
+namespace {
+
+    static Plugin::Metadata<Plugin::AVInput> metadata(
+        // Version (Major, Minor, Patch)
+        API_VERSION_NUMBER_MAJOR, API_VERSION_NUMBER_MINOR, API_VERSION_NUMBER_PATCH,
+        // Preconditions
+        {},
+        // Terminations
+        {},
+        // Controls
+        {});
+}
+
+namespace Plugin {
+
+    SERVICE_REGISTRATION(AVInput, API_VERSION_NUMBER_MAJOR, API_VERSION_NUMBER_MINOR, API_VERSION_NUMBER_PATCH);
+
+    AVInput::AVInput()
+        : _service(nullptr)
+        , _connectionId(0)
+        , _avInput(nullptr)
+        , _avInputNotification(this)
+    {
+        PluginHost::JSONRPC::Register<JsonObject, JsonObject>(_T(AVINPUT_METHOD_GET_INPUT_DEVICES), &AVInput::getInputDevicesWrapper, this);
+        SYSLOG(Logging::Startup, (_T("AVInput Constructor")));
+    }
+
+    AVInput::~AVInput()
+    {
+        PluginHost::JSONRPC::Unregister(_T(AVINPUT_METHOD_GET_INPUT_DEVICES));
+        SYSLOG(Logging::Shutdown, (string(_T("AVInput Destructor"))));
+    }
+
+    const string AVInput::Initialize(PluginHost::IShell* service)
+    {
+        string message = "";
+
+        ASSERT(nullptr != service);
+        ASSERT(nullptr == _service);
+        ASSERT(nullptr == _avInput);
+        ASSERT(0 == _connectionId);
+
+        SYSLOG(Logging::Startup, (_T("AVInput::Initialize: PID=%u"), getpid()));
+
+        _service = service;
+        _service->AddRef();
+        _service->Register(&_avInputNotification);
+
+        _avInput = service->Root<Exchange::IAVInput>(_connectionId, 5000, _T("AVInputImplementation"));
+
+        if (nullptr != _avInput) {
+            _avInput->RegisterDevicesChangedNotification(_avInputNotification.baseInterface<Exchange::IAVInput::IDevicesChangedNotification>());
+            _avInput->RegisterSignalChangedNotification(_avInputNotification.baseInterface<Exchange::IAVInput::ISignalChangedNotification>());
+            _avInput->RegisterInputStatusChangedNotification(_avInputNotification.baseInterface<Exchange::IAVInput::IInputStatusChangedNotification>());
+            _avInput->RegisterVideoStreamInfoUpdateNotification(_avInputNotification.baseInterface<Exchange::IAVInput::IVideoStreamInfoUpdateNotification>());
+            _avInput->RegisterGameFeatureStatusUpdateNotification(_avInputNotification.baseInterface<Exchange::IAVInput::IGameFeatureStatusUpdateNotification>());
+            _avInput->RegisterAviContentTypeUpdateNotification(_avInputNotification.baseInterface<Exchange::IAVInput::IAviContentTypeUpdateNotification>());
+
+            _avInput->Configure(service);
+
+            refreshDeviceCache();
+
+            // COM-RPC: open the DeviceSettings link so getInputDevices() can
+            // use DSHelper::AcquireSubInterface<IDeviceSettingsHDMIIn/CompositeIn>().
+            // OnDeviceSettingsActivated/Deactivated overrides are empty — AVInput
+            // has no notification delegates to register; it queries on demand.
+            DSHelper::Open(service, "AVInput");
+
+            // Invoking Plugin API register to wpeframework
+            Exchange::JAVInput::Register(*this, _avInput);
+        } else {
+            SYSLOG(Logging::Startup, (_T("AVInput::Initialize: Failed to initialize AVInput plugin")));
+            message = _T("AVInput plugin could not be initialized");
+        }
+
+        return message;
+    }
+
+    void AVInput::Deinitialize(PluginHost::IShell* service)
+    {
+        ASSERT(_service == service);
+
+        SYSLOG(Logging::Shutdown, (string(_T("AVInput::Deinitialize"))));
+
+        // Make sure the Activated and Deactivated are no longer called before we start cleaning up.
+        _service->Unregister(&_avInputNotification);
+
+        if (nullptr != _avInput) {
+
+            _avInput->UnregisterDevicesChangedNotification(_avInputNotification.baseInterface<Exchange::IAVInput::IDevicesChangedNotification>());
+            _avInput->UnregisterSignalChangedNotification(_avInputNotification.baseInterface<Exchange::IAVInput::ISignalChangedNotification>());
+            _avInput->UnregisterInputStatusChangedNotification(_avInputNotification.baseInterface<Exchange::IAVInput::IInputStatusChangedNotification>());
+            _avInput->UnregisterVideoStreamInfoUpdateNotification(_avInputNotification.baseInterface<Exchange::IAVInput::IVideoStreamInfoUpdateNotification>());
+            _avInput->UnregisterGameFeatureStatusUpdateNotification(_avInputNotification.baseInterface<Exchange::IAVInput::IGameFeatureStatusUpdateNotification>());
+            _avInput->UnregisterAviContentTypeUpdateNotification(_avInputNotification.baseInterface<Exchange::IAVInput::IAviContentTypeUpdateNotification>());
+
+            Exchange::JAVInput::Unregister(*this);
+
+            // COM-RPC: close the DeviceSettings link
+            DSHelper::Close();
+
+            // Stop processing:
+            RPC::IRemoteConnection* connection = service->RemoteConnection(_connectionId);
+            VARIABLE_IS_NOT_USED uint32_t result = _avInput->Release();
+
+            _avInput = nullptr;
+
+            // It should have been the last reference we are releasing,
+            // so it should endup in a DESTRUCTION_SUCCEEDED, if not we
+            // are leaking...
+            ASSERT(result == Core::ERROR_DESTRUCTION_SUCCEEDED);
+
+            // If this was running in a (container) process...
+            if (nullptr != connection) {
+                // Lets trigger the cleanup sequence for
+                // out-of-process code. Which will guard
+                // that unwilling processes, get shot if
+                // not stopped friendly :-)
+                try {
+                    connection->Terminate();
+                    LOGWARN("Connection terminated successfully.");
+                } catch (const std::exception& e) {
+                    std::string errorMessage = "Failed to terminate connection: ";
+                    errorMessage += e.what();
+                    LOGWARN("%s", errorMessage.c_str());
+                }
+
+                connection->Release();
+            }
+        }
+
+        _connectionId = 0;
+        _service->Release();
+        _service = nullptr;
+        SYSLOG(Logging::Shutdown, (string(_T("AVInput de-initialised"))));
+    }
+
+    // =========================================================================
+    // COM-RPC path: replaces DS_IARM's direct libds calls:
+    //   device::HdmiInput::getInstance().getNumberOfInputs()      →  IDeviceSettingsHDMIIn::GetHDMIInNumberOfInputs()
+    //   device::HdmiInput::getInstance().isPortConnected(i)       →  IDeviceSettingsHDMIIn::GetHDMIInStatus() iterator
+    //   device::CompositeInput::getInstance().getNumberOfInputs() →  IDeviceSettingsCompositeIn::GetNrOfCompositeInputs()
+    //   device::CompositeInput::getInstance().isPortConnected(i)  →  IDeviceSettingsCompositeIn::GetCompositeInStatus()
+    // =========================================================================
+    JsonArray AVInput::getInputDevices(int iType)
+    {
+        JsonArray list;
+        try
+        {
+            Core::hresult comResult = Core::ERROR_NONE;
+            if (iType == INPUT_TYPE_INT_HDMI) {
+                auto* hdmiIn = DSHelper::AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
+                if (hdmiIn != nullptr) {
+                    int32_t num = 0;
+                    comResult = hdmiIn->GetHDMIInNumberOfInputs(num);
+                    if (Core::ERROR_NONE != comResult) {
+                        LOGERR("GetHDMIInNumberOfInputs failed, Error: %d", static_cast<int>(comResult));
+                    }
+
+                    // Collect per-port connection status via GetHDMIInStatus iterator.
+                    // HDMIPortConnectionStatus has only isPortConnected (no id field) —
+                    // iterate in order; position in iterator == port index.
+                    Exchange::IDeviceSettingsHDMIIn::HDMIInStatus hdmiStatus{};
+                    Exchange::IDeviceSettingsHDMIIn::IHDMIInPortConnectionStatusIterator* portIter = nullptr;
+                    comResult = hdmiIn->GetHDMIInStatus(hdmiStatus, portIter);
+                    if (Core::ERROR_NONE != comResult) {
+                        LOGERR("GetHDMIInStatus failed, Error: %d", static_cast<int>(comResult));
+                    }
+
+                    std::vector<bool> connected(static_cast<size_t>(num), false);
+                    if (portIter != nullptr) {
+                        Exchange::IDeviceSettingsHDMIIn::HDMIPortConnectionStatus portStatus{};
+                        int portIdx = 0;
+                        while (portIter->Next(portStatus)) {
+                            if (portIdx < num) {
+                                connected[static_cast<size_t>(portIdx)] = portStatus.isPortConnected;
+                            }
+                            portIdx++;
+                        }
+                        portIter->Release();
+                    }
+
+                    for (int i = 0; i < num; i++) {
+                        JsonObject hash;
+                        hash["id"] = i;
+                        std::stringstream locator;
+                        locator << "hdmiin://localhost/deviceid/" << i;
+                        bool connectedBool = connected[static_cast<size_t>(i)];  // explicit bool: avoids std::vector<bool> proxy → "connected":0 (int) issue
+                        hash["connected"] = connectedBool;
+                        hash["locator"] = locator.str();
+                        LOGWARN("AVInputService::getInputDevices id %d, locator=[%s], connected=[%d]",
+                            i, hash["locator"].String().c_str(), hash["connected"].Boolean());
+                        list.Add(hash);
+                    }
+                    hdmiIn->Release();
+                }
+                else {
+                    LOGWARN("IDeviceSettingsHDMIIn not available");
+                }
+            }
+            else if (iType == INPUT_TYPE_INT_COMPOSITE) {
+                auto* compositeIn = DSHelper::AcquireSubInterface<Exchange::IDeviceSettingsCompositeIn>();
+                if (compositeIn != nullptr) {
+                    int32_t num = 0;
+                    comResult = compositeIn->GetNrOfCompositeInputs(num);
+                    if (Core::ERROR_NONE != comResult) {
+                        LOGERR("GetNrOfCompositeInputs failed, Error: %d", static_cast<int>(comResult));
+                        compositeIn->Release();
+                        return list;
+                    }
+
+                    // Collect per-port connection status via GetCompositeInStatus struct
+                    Exchange::IDeviceSettingsCompositeIn::CompositeInStatus status{};
+                    comResult = compositeIn->GetCompositeInStatus(status);
+                    if (Core::ERROR_NONE != comResult) {
+                        LOGERR("GetCompositeInStatus failed, Error: %d", static_cast<int>(comResult));
+                    }
+
+                    for (int i = 0; i < num; i++) {
+                        JsonObject hash;
+                        hash["id"] = i;
+                        std::stringstream locator;
+                        locator << "cvbsin://localhost/deviceid/" << i;
+                        bool isConnected = (i == 0) ? status.isPort0Connected : status.isPort1Connected;
+                        hash["connected"] = isConnected;
+                        hash["locator"] = locator.str();
+                        LOGWARN("AVInputService::getInputDevices id %d, locator=[%s], connected=[%d]",
+                            i, hash["locator"].String().c_str(), hash["connected"].Boolean());
+                        list.Add(hash);
+                    }
+                    compositeIn->Release();
+                }
+                else {
+                    LOGWARN("IDeviceSettingsCompositeIn not available");
+                }
+            }
+        }
+        catch (const std::exception &e) {
+            LOGWARN("AVInputService::getInputDevices Failed: %s", e.what());
+        }
+        return list;
+    }
+
+    void AVInput::refreshDeviceCache()
+    {
+        JsonArray hdmi = getInputDevices(INPUT_TYPE_INT_HDMI);
+        JsonArray composite = getInputDevices(INPUT_TYPE_INT_COMPOSITE);
+        _deviceCacheLock.Lock();
+        _cachedHdmiDevices = hdmi;
+        _cachedCompositeDevices = composite;
+        _deviceCacheLock.Unlock();
+        LOGINFO("AVInput::refreshDeviceCache: cached %d HDMI, %d composite devices", hdmi.Length(), composite.Length());
+    }
+
+    uint32_t AVInput::getInputDevicesWrapper(const JsonObject& parameters, JsonObject& response)
+    {
+        LOGINFOMETHOD();
+
+        if (parameters.HasLabel("typeOfInput")) {
+            string sType = parameters["typeOfInput"].String();
+            int iType = 0;
+            try {
+                iType = AVInputUtils::getTypeOfInput(sType);
+            }catch (...) {
+                LOGWARN("Invalid Arguments");
+                returnResponse(false);
+            }
+            _deviceCacheLock.Lock();
+            if (iType == INPUT_TYPE_INT_HDMI) {
+                response["devices"] = _cachedHdmiDevices;
+            } else if (iType == INPUT_TYPE_INT_COMPOSITE) {
+                response["devices"] = _cachedCompositeDevices;
+            } else {
+                // Fallback: query live for unrecognised types
+                _deviceCacheLock.Unlock();
+                response["devices"] = getInputDevices(iType);
+                returnResponse(true);
+            }
+            _deviceCacheLock.Unlock();
+        }
+        else {
+            _deviceCacheLock.Lock();
+            JsonArray combined = _cachedHdmiDevices;
+            for (int i = 0; i < _cachedCompositeDevices.Length(); i++) {
+                combined.Add(_cachedCompositeDevices.Get(i));
+            }
+            _deviceCacheLock.Unlock();
+            response["devices"] = combined;
+        }
+        returnResponse(true);
+    }
+
+    string AVInput::Information() const
+    {
+        return (string());
+    }
+
+    void AVInput::Deactivated(RPC::IRemoteConnection* connection)
+    {
+        if (connection->Id() == _connectionId) {
+            ASSERT(nullptr != _service);
+            Core::IWorkerPool::Instance().Submit(PluginHost::IShell::Job::Create(_service, PluginHost::IShell::DEACTIVATED, PluginHost::IShell::FAILURE));
+        }
+    }
+
+    void AVInput::Notification::OnDevicesChanged(Exchange::IAVInput::IInputDeviceIterator* const devices)
+    {
+        if (devices != nullptr)
+        {
+            Exchange::IAVInput::InputDevice resultItem{};
+            Core::JSON::Container eventPayload;
+
+            if(devices->Count() == 0) {
+                JsonObject params;
+                JsonArray emptyArray;
+                params["devices"] = emptyArray;
+                _parent.Notify(_T("onDevicesChanged"), params);
+                _parent.refreshDeviceCache();
+                return;
+            }
+
+            // Build event payload and simultaneously update type-specific caches
+            JsonArray newHdmi;
+            JsonArray newComposite;
+            Core::JSON::ArrayType<InputDeviceJson> deviceArray;
+            while (devices->Next(resultItem) == true) {
+                deviceArray.Add() = resultItem;
+                JsonObject entry;
+                entry["id"] = resultItem.id;
+                entry["locator"] = resultItem.locator;
+                entry["connected"] = resultItem.connected;
+                if (resultItem.locator.find("hdmiin://") == 0) {
+                    newHdmi.Add(entry);
+                } else if (resultItem.locator.find("cvbsin://") == 0) {
+                    newComposite.Add(entry);
+                }
+            }
+
+            // Update only the cache(s) for the type(s) present in this event
+            _parent._deviceCacheLock.Lock();
+            if (newHdmi.Length() > 0) {
+                _parent._cachedHdmiDevices = std::move(newHdmi);
+            }
+            if (newComposite.Length() > 0) {
+                _parent._cachedCompositeDevices = std::move(newComposite);
+            }
+            _parent._deviceCacheLock.Unlock();
+
+            eventPayload.Add(_T("devices"), &deviceArray);
+            _parent.Notify(_T("onDevicesChanged"), eventPayload)
+        }
+    }
+
+} // namespace Plugin
+} // namespace WPEFramework
