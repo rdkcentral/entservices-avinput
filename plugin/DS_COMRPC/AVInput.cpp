@@ -380,7 +380,7 @@ namespace Plugin {
             _parent._deviceCacheLock.Unlock();
 
             eventPayload.Add(_T("devices"), &deviceArray);
-            _parent.Notify(_T("onDevicesChanged"), eventPayload)
+            _parent.Notify(_T("onDevicesChanged"), eventPayload);
         }
     }
 
