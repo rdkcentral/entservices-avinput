@@ -476,6 +476,9 @@ namespace Plugin {
     {
         int id;
 
+        LOGINFO("portId[%s] typeOfInput[%s] requestAudioMix[%s] plane[%d] topMost[%s]",
+                portId.c_str(), typeOfInput.c_str(), requestAudioMix ? "true" : "false", plane, topMost ? "true" : "false");
+
         try {
             id = stoi(portId);
         } catch (const std::exception& err) {

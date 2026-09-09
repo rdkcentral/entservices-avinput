@@ -165,11 +165,16 @@ namespace Plugin {
 
         Core::Sink<Notification> _avInputNotification;
 
+        mutable Core::CriticalSection _deviceCacheLock;
+        JsonArray _cachedHdmiDevices;
+        JsonArray _cachedCompositeDevices;
+
         void Deactivated(RPC::IRemoteConnection* connection);
 
         // COM-RPC: replaces direct libds calls inside getInputDevices()
         // DS_IARM used device::HdmiInput::getInstance() / device::CompositeInput::getInstance()
         JsonArray getInputDevices(int iType);
+        void refreshDeviceCache();
         uint32_t getInputDevicesWrapper(const JsonObject& parameters, JsonObject& response);
 
         // COMRPC_TODO: AVInput inherits DSHelper solely to support
@@ -181,8 +186,8 @@ namespace Plugin {
         // natively via IAVInput autogeneration), getInputDevicesWrapper and getInputDevices
         // can be removed from AVInput entirely, DSHelper inheritance can
         // be dropped from AVInput, and AVInputImplementation alone will be sufficient.
-        void OnDeviceSettingsActivated() override {}
-        void OnDeviceSettingsDeactivated() override {}
+        void OnDeviceSettingsActivated() override;
+        void OnDeviceSettingsDeactivated() override;
 
     }; // AVInput
 } // namespace Plugin
