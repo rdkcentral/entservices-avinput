@@ -32,15 +32,17 @@
 #include "UtilsLogging.h"
 #include "tracing/Logging.h"
 
-#include "host.hpp"
-#include "compositeIn.hpp"
-#include "hdmiIn.hpp"
+// COM-RPC path: DeviceSettingsInterface.h brings DSHelper
+// and all DS sub-interface headers (IDeviceSettingsHDMIIn, IDeviceSettingsCompositeIn, ...).
+// Replaces DS_IARM includes: host.hpp, compositeIn.hpp, hdmiIn.hpp
+#include "DeviceSettingsInterface.h"
 
 namespace WPEFramework {
 namespace Plugin {
-    
-    class AVInput: public PluginHost::IPlugin, 
-                public PluginHost::JSONRPC {
+
+    class AVInput: public PluginHost::IPlugin,
+                   public PluginHost::JSONRPC,
+                   public DSHelper {
     public:
 
         AVInput(const AVInput&) = delete;
@@ -56,7 +58,7 @@ namespace Plugin {
         END_INTERFACE_MAP
 
         //  IPlugin methods
-        // -------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------
         const string Initialize(PluginHost::IShell* service) override;
         void Deinitialize(PluginHost::IShell* service) override;
         string Information() const override;
@@ -81,7 +83,7 @@ namespace Plugin {
                              public Exchange::IAVInput::IAviContentTypeUpdateNotification {
 
         public:
-        
+
             explicit Notification(AVInput* parent)
                 : _parent(*parent)
             {
@@ -132,7 +134,8 @@ namespace Plugin {
                 Exchange::JAVInput::Event::OnInputStatusChanged(_parent, id, locator, status, plane);
             }
 
-            void VideoStreamInfoUpdate(const int id, const string& locator, const int width, const int height, const bool progressive, const int frameRateN, const int frameRateD) override
+            void VideoStreamInfoUpdate(const int id, const string& locator, const int width, const int height,
+                                       const bool progressive, const int frameRateN, const int frameRateD) override
             {
                 LOGINFO("VideoStreamInfoUpdate: id %d, width %d, height %d, frameRateN %d, frameRateD %d, progressive %d, locator %s\n",
                     id, width, height, frameRateN, frameRateD, progressive, locator.c_str());
@@ -168,9 +171,23 @@ namespace Plugin {
 
         void Deactivated(RPC::IRemoteConnection* connection);
 
+        // COM-RPC: replaces direct libds calls inside getInputDevices()
+        // DS_IARM used device::HdmiInput::getInstance() / device::CompositeInput::getInstance()
         JsonArray getInputDevices(int iType);
         void refreshDeviceCache();
         uint32_t getInputDevicesWrapper(const JsonObject& parameters, JsonObject& response);
+
+        // COMRPC_TODO: AVInput inherits DSHelper solely to support
+        // getInputDevices() / getInputDevicesWrapper() which call AcquireSubInterface<>()
+        // directly from the plugin wrapper process. This is necessary in Thunder 4.x
+        // because getInputDevicesWrapper is explicitly registered to work around missing
+        // optional-parameter support (see AVINPUT_METHOD_GET_INPUT_DEVICES comment above).
+        // Once this plugin migrates to Thunder 5.x (which supports optional parameters
+        // natively via IAVInput autogeneration), getInputDevicesWrapper and getInputDevices
+        // can be removed from AVInput entirely, DSHelper inheritance can
+        // be dropped from AVInput, and AVInputImplementation alone will be sufficient.
+        void OnDeviceSettingsActivated() override;
+        void OnDeviceSettingsDeactivated() override;
 
     }; // AVInput
 } // namespace Plugin
