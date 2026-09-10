@@ -704,11 +704,11 @@ namespace Plugin {
                             LOGERR("GetHDMIInNumberOfInputs failed, Error: %d", static_cast<int>(comResult));
                             num = 0;
                         }
+                        hdmiIn->Release();
                     } else {
                         LOGERR("IDeviceSettingsHDMIIn not available");
                         num = 0;
                     }
-                    hdmiIn->Release();
                     break;
                 }
                 case INPUT_TYPE_INT_COMPOSITE: {
@@ -720,11 +720,11 @@ namespace Plugin {
                             LOGERR("GetNrOfCompositeInputs failed, Error: %d", static_cast<int>(comResult));
                             num = 0;
                         }
+                        compositeIn->Release();
                     } else {
                         LOGERR("IDeviceSettingsCompositeIn not available");
                         num = 0;
                     }
-                    compositeIn->Release();
                     isHdmi = false;
                     break;
                 }
@@ -1316,6 +1316,9 @@ namespace Plugin {
             }
             hdmiIn->Release();
         }
+        else {
+            LOGERR("Failed to acquire IDeviceSettingsHDMIIn interface");
+        }
         return allm;
     }
 
@@ -1339,6 +1342,9 @@ namespace Plugin {
                 LOGERR("getVRRStatus failed for portId=%d, Error: %d", iPort, static_cast<int>(comResult));
             }
             hdmiIn->Release();
+        }
+        else {
+            LOGERR("Failed to acquire IDeviceSettingsHDMIIn interface");
         }
         return ret;
     }
