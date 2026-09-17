@@ -2,7 +2,7 @@
 
 ## Product Description
 
-The AVInput plugin is an enterprise-grade WPEFramework component that provides comprehensive audio/video input management capabilities for RDK-based devices. It enables applications to discover, monitor, and control external AV inputs including HDMI and Composite sources, making it essential for smart TVs, set-top boxes, and streaming devices that need to integrate external content sources.
+The AVInput plugin is an enterprise-grade Thunder component that provides comprehensive audio/video input management capabilities for RDK-based devices. It enables applications to discover, monitor, and control external AV inputs including HDMI and Composite sources, making it essential for smart TVs, set-top boxes, and streaming devices that need to integrate external content sources.
 
 ## Key Features
 
@@ -132,7 +132,7 @@ Optimize display settings for gaming:
 - Optional: Composite input hardware
 
 ### Software Requirements
-- WPEFramework (Thunder) R4.4+
+- Thunder (Thunder) R4.4+
 - RDK Device Settings libraries
 - IARMBus (for inter-process communication)
 

@@ -33,7 +33,7 @@
 // be refactored after migrating to 5.x.
 #define AVINPUT_METHOD_GET_INPUT_DEVICES "getInputDevices"
 
-namespace WPEFramework {
+namespace Thunder {
 namespace {
 
     static Plugin::Metadata<Plugin::AVInput> metadata(
@@ -96,7 +96,7 @@ namespace Plugin {
 
             refreshDeviceCache();
 
-            // Invoking Plugin API register to wpeframework
+            // Invoking Plugin API register to Thunder
             Exchange::JAVInput::Register(*this, _avInput);
         } else {
             SYSLOG(Logging::Startup, (_T("AVInput::Initialize: Failed to initialize AVInput plugin")));
@@ -312,4 +312,4 @@ namespace Plugin {
         }
     }
 } // namespace Plugin
-} // namespace WPEFramework
+} // namespace Thunder

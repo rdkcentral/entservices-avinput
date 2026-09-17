@@ -20,7 +20,7 @@
 #include "AVInputUtils.h"
 #include <stdexcept>
 
-namespace WPEFramework {
+namespace Thunder {
 namespace Plugin {
 
 int AVInputUtils::getTypeOfInput(const std::string& sType) {
@@ -47,5 +47,5 @@ const std::string& AVInputUtils::getTypeOfInput(const int type) {
     }
 }
 
-} // namespace WPEFramework
+} // namespace Thunder
 } // namespace Plugin

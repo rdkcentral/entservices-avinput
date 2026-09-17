@@ -29,7 +29,7 @@ static const int            INPUT_TYPE_INT_ALL          = -1;
 static const int            INPUT_TYPE_INT_HDMI         = 0;
 static const int            INPUT_TYPE_INT_COMPOSITE    = 1;
 
-namespace WPEFramework {
+namespace Thunder {
     namespace Plugin {
         class AVInputUtils {
         public:
@@ -40,5 +40,5 @@ namespace WPEFramework {
             AVInputUtils() = delete;
         };
 
-    } // namespace WPEFramework
+    } // namespace Thunder
 } // namespace Plugin

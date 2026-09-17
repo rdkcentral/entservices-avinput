@@ -36,7 +36,7 @@
 #include "AVInputMock.h"
 #include "WorkerPoolImplementation.h"
 
-using namespace WPEFramework;
+using namespace Thunder;
 
 using ::testing::NiceMock;
 

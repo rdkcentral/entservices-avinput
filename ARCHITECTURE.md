@@ -2,7 +2,7 @@
 
 ## Overview
 
-The AVInput plugin is a WPEFramework (Thunder) plugin that provides comprehensive AV input management functionality for RDK devices. It serves as the primary interface for handling HDMI and Composite video inputs, exposing device information, signal characteristics, and content metadata to client applications.
+The AVInput plugin is a Thunder plugin that provides comprehensive AV input management functionality for RDK devices. It serves as the primary interface for handling HDMI and Composite video inputs, exposing device information, signal characteristics, and content metadata to client applications.
 
 ## System Architecture
 
@@ -14,7 +14,7 @@ The AVInput plugin is a WPEFramework (Thunder) plugin that provides comprehensiv
 └──────────────────┬──────────────────────────────────────────┘
                    │
 ┌──────────────────▼──────────────────────────────────────────┐
-│              WPEFramework Core                               │
+│              Thunder Core                               │
 │  ┌───────────────────────────────────────────────────┐      │
 │  │         AVInput Plugin (PluginHost)               │      │
 │  │  ┌─────────────────────────────────────────┐     │      │
@@ -49,7 +49,7 @@ The AVInput plugin is a WPEFramework (Thunder) plugin that provides comprehensiv
 - Exposes JSON-RPC API interface to client applications
 - Manages plugin lifecycle (initialization, deinitialization)
 - Registers/unregisters notification callbacks
-- Handles communication between WPEFramework and implementation layer
+- Handles communication between Thunder and implementation layer
 
 **Key Interfaces:**
 - `PluginHost::IPlugin` - Plugin lifecycle management
@@ -131,7 +131,7 @@ Hardware Signal Change
 ## Dependencies
 
 ### External Libraries
-- **WPEFramework Core:** Plugin infrastructure, JSON-RPC, threading
+- **Thunder Core:** Plugin infrastructure, JSON-RPC, threading
 - **Device Settings (DS):** HAL abstraction for AV devices
 - **IARMBus:** Inter-process communication (optional)
 - **Boost:** Type-safe variant for event parameters
@@ -178,7 +178,7 @@ Configuration file: `AVInput.config`
 - No direct hardware access (abstracted via DS HAL)
 - Input validation on all API parameters
 - Secure handling of HDCP status information
-- No authentication required (delegated to WPEFramework)
+- No authentication required (delegated to Thunder)
 
 ---
 

@@ -52,7 +52,7 @@
 #define DEFAULT_INPUT_VOL_LEVEL 100
 
 using ParamsType = boost::variant<
-    WPEFramework::Exchange::IAVInput::IInputDeviceIterator* const,  // OnDevicesChanged
+    Thunder::Exchange::IAVInput::IInputDeviceIterator* const,  // OnDevicesChanged
     std::tuple<int, string, string>,                                // OnSignalChanged
     std::tuple<int, string, string, int>,                           // OnInputStatusChanged
     std::tuple<int, string, int, int, bool, int, int>,              // VideoStreamInfoUpdate
@@ -60,7 +60,7 @@ using ParamsType = boost::variant<
     std::tuple<int, int>                                            // AviContentTypeUpdate
 >;
 
-namespace WPEFramework {
+namespace Thunder {
 namespace Plugin {
 
     class AVInputImplementation :   public Exchange::IAVInput,
@@ -195,7 +195,7 @@ namespace Plugin {
         Core::hresult GetSupportedGameFeatures(IStringIterator*& features, bool& success) override;
         Core::hresult GetGameFeatureStatus(const string& portId, const string& gameFeature, bool& mode, bool& success) override;
         Core::hresult GetVRRFrameRate(const string& portId, double& currentVRRVideoFrameRate, bool& success) override;
-        Core::hresult getInputDevices(const string& typeOfInput, std::list<WPEFramework::Exchange::IAVInput::InputDevice>& inputDeviceList);
+        Core::hresult getInputDevices(const string& typeOfInput, std::list<Thunder::Exchange::IAVInput::InputDevice>& inputDeviceList);
         Core::hresult GetARCPortId(string& portId, bool& success) override;
 
     private:
@@ -254,4 +254,4 @@ namespace Plugin {
     };
 
 } // namespace Plugin
-} // namespace WPEFramework
+} // namespace Thunder

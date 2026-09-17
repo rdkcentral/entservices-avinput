@@ -26,7 +26,7 @@
 // Because of this AVInput handles the event and converts the iterator to a JSON array string. When we move to 5.x we can
 // remove this class and use the iterator directly in the event.
 
-namespace WPEFramework
+namespace Thunder
 {
     namespace Plugin
     {
@@ -89,7 +89,7 @@ namespace WPEFramework
             private:
                 void _Init()
                 {
-                    Add(_T("id"), &Id);
+                    Add(_T("id"), &Id);Thunder
                     Add(_T("locator"), &Locator);
                     Add(_T("connected"), &Connected);
                 }
@@ -101,4 +101,4 @@ namespace WPEFramework
 
         }; // class InputDeviceJson
     } // namespace Plugin
-} // namespace WPEFramework
+} // namespace Thunder

@@ -38,7 +38,7 @@ static int planeType = 0;
 
 using namespace std;
 
-namespace WPEFramework {
+namespace Thunder {
 namespace Plugin {
     SERVICE_REGISTRATION(AVInputImplementation, 1, 0);
     AVInputImplementation* AVInputImplementation::_instance = nullptr;
@@ -223,7 +223,7 @@ namespace Plugin {
 
     void AVInputImplementation::Dispatch(Event event, const ParamsType params)
     {
-        using namespace WPEFramework::Exchange;
+        using namespace Thunder::Exchange;
 
         _adminLock.Lock();
 
@@ -497,7 +497,7 @@ namespace Plugin {
         return Core::ERROR_NONE;
     }
 
-    Core::hresult AVInputImplementation::getInputDevices(const string& typeOfInput, std::list<WPEFramework::Exchange::IAVInput::InputDevice> &inputDeviceList)
+    Core::hresult AVInputImplementation::getInputDevices(const string& typeOfInput, std::list<Thunder::Exchange::IAVInput::InputDevice> &inputDeviceList)
     {
         int num = 0;
         bool isHdmi = true;
@@ -523,7 +523,7 @@ namespace Plugin {
                 int i = 0;
                 for (i = 0; i < num; i++) {
                     // Input ID is aleays 0-indexed, continuous number starting 0
-                    WPEFramework::Exchange::IAVInput::InputDevice inputDevice;
+                    Thunder::Exchange::IAVInput::InputDevice inputDevice;
 
                     inputDevice.id = i;
                     std::stringstream locator;
@@ -550,7 +550,7 @@ namespace Plugin {
     Core::hresult AVInputImplementation::GetInputDevices(const string& typeOfInput, IInputDeviceIterator*& devices, bool& success)
     {
         Core::hresult result;
-        std::list<WPEFramework::Exchange::IAVInput::InputDevice> inputDeviceList;
+        std::list<Thunder::Exchange::IAVInput::InputDevice> inputDeviceList;
         success = false;
 
         try {
@@ -1568,4 +1568,4 @@ namespace Plugin {
     }
 
 } // namespace Plugin
-} // namespace WPEFramework
+} // namespace Thunder
