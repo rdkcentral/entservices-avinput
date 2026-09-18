@@ -90,7 +90,7 @@ namespace Thunder
             private:
                 void _Init()
                 {
-                    Add(_T("id"), &Id);Thunder
+                    Add(_T("id"), &Id);
                     Add(_T("locator"), &Locator);
                     Add(_T("connected"), &Connected);
                 }
