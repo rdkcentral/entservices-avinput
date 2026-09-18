@@ -34,6 +34,7 @@ namespace Thunder
             public:
                 InputDeviceJson()
                     : Core::JSON::Container()
+                    , Locator()
                 {
                     _Init();
                 }
