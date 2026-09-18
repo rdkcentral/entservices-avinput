@@ -36,7 +36,7 @@
 #include "compositeIn.hpp"
 #include "hdmiIn.hpp"
 
-namespace WPEFramework {
+namespace Thunder {
 namespace Plugin {
     
     class AVInput: public PluginHost::IPlugin, 
@@ -174,4 +174,4 @@ namespace Plugin {
 
     }; // AVInput
 } // namespace Plugin
-} // namespace WPEFramework
+} // namespace Thunder
