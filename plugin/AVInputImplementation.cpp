@@ -493,8 +493,15 @@ namespace Plugin {
             return Core::ERROR_NONE;
         }
 
-        int iType = AVInputUtils::getTypeOfInput(typeOfInput);
+        int iType;
         Core::hresult comResult = Core::ERROR_NONE;
+        try {
+            iType = AVInputUtils::getTypeOfInput(typeOfInput);
+        } catch (...) {
+            LOGERR("StartInput: Invalid input type %s", typeOfInput.c_str());
+            successResult.success = false;
+            return Core::ERROR_NONE;
+        }
 
         if (iType == INPUT_TYPE_INT_HDMI) {
             // COM-RPC: device::HdmiInput::getInstance().selectPort(id, requestAudioMix, plane, topMost)
@@ -633,8 +640,16 @@ namespace Plugin {
     Core::hresult AVInputImplementation::SetVideoRectangle(const uint16_t x, const uint16_t y,
         const uint16_t w, const uint16_t h, const string& typeOfInput, SuccessResult& successResult)
     {
-        int iType = AVInputUtils::getTypeOfInput(typeOfInput);
+        int iType;
         Core::hresult comResult = Core::ERROR_NONE;
+
+        try {
+            iType = AVInputUtils::getTypeOfInput(typeOfInput);
+        } catch (...) {
+            LOGERR("SetVideoRectangle: Invalid input type %s", typeOfInput.c_str());
+            successResult.success = false;
+            return Core::ERROR_NONE;
+        }
 
         if (iType == INPUT_TYPE_INT_HDMI) {
             // COM-RPC: device::HdmiInput::getInstance().scaleVideo(x, y, w, h)
