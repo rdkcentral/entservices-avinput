@@ -196,6 +196,7 @@ namespace Plugin {
         Core::hresult GetGameFeatureStatus(const string& portId, const string& gameFeature, bool& mode, bool& success) override;
         Core::hresult GetVRRFrameRate(const string& portId, double& currentVRRVideoFrameRate, bool& success) override;
         Core::hresult getInputDevices(const string& typeOfInput, std::list<WPEFramework::Exchange::IAVInput::InputDevice>& inputDeviceList);
+        Core::hresult GetARCPortId(string& portId, bool& success) override;
 
     private:
 
