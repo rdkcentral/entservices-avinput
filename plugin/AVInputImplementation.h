@@ -20,6 +20,7 @@
 #pragma once
 
 #include "Module.h"
+#include "PowerManagerInterface.h"
 
 #include "UtilsIarm.h"
 #include "UtilsJsonRpc.h"
@@ -36,6 +37,7 @@
 
 #include <interfaces/IAVInput.h>
 #include <interfaces/Ids.h>
+#include <interfaces/IPowerManager.h>
 
 #include <boost/variant.hpp>
 #include <com/com.h>
@@ -91,7 +93,8 @@ namespace Plugin {
             ON_AVINPUT_STATUS_CHANGED,
             ON_AVINPUT_VIDEO_STREAM_INFO_UPDATE,
             ON_AVINPUT_GAME_FEATURE_STATUS_UPDATE,
-            ON_AVINPUT_AVI_CONTENT_TYPE_UPDATE
+            ON_AVINPUT_AVI_CONTENT_TYPE_UPDATE,
+            ON_AVINPUT_REFRESH_STATE
         };
 
         class EXTERNAL Job : public Core::IDispatch {
@@ -200,10 +203,30 @@ namespace Plugin {
 
     private:
 
+        class PowerManagerNotification : public Exchange::IPowerManager::IModeChangedNotification {
+        public:
+            explicit PowerManagerNotification(AVInputImplementation& parent)
+                : _parent(parent)
+            {
+            }
+
+            void OnPowerModeChanged(const Exchange::IPowerManager::PowerState currentState,
+                                    const Exchange::IPowerManager::PowerState newState) override;
+
+            BEGIN_INTERFACE_MAP(PowerManagerNotification)
+                INTERFACE_ENTRY(Exchange::IPowerManager::IModeChangedNotification)
+            END_INTERFACE_MAP
+
+        private:
+            AVInputImplementation& _parent;
+        };
+
         mutable Core::CriticalSection _adminLock;
         PluginHost::IShell* _service;
         bool _registeredDsEventHandlers;
         bool _registeredPowerEventHandler;
+        PowerManagerInterfaceRef _powerManagerPlugin;
+        Core::Sink<PowerManagerNotification> _powerManagerNotification;
 
         template <typename T>
         T* baseInterface()
@@ -242,8 +265,8 @@ namespace Plugin {
         static void dsAVVideoModeEventHandler(const char* owner, IARM_EventId_t eventId, void* data, size_t len);
         static void dsAVGameFeatureStatusEventHandler(const char* owner, IARM_EventId_t eventId, void* data, size_t len);
         static void dsAviContentTypeEventHandler(const char* owner, IARM_EventId_t eventId, void* data, size_t len);
-        static void powerEventHandler(const char* owner, IARM_EventId_t eventId, void* data, size_t len);
-
+        void powerModeChanged(const Exchange::IPowerManager::PowerState currentState,
+                      const Exchange::IPowerManager::PowerState newState);
         void refreshInputState();
 
         /* Notification utility methods */

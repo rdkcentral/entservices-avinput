@@ -24,7 +24,6 @@
 #include <time.h>
 #include <utility>
 
-#include "pwrMgr.h"
 #include "UtilsJsonRpc.h"
 
 #define STR_ALLM                        "ALLM"
@@ -45,7 +44,7 @@ namespace Plugin {
     SERVICE_REGISTRATION(AVInputImplementation, 1, 0);
     AVInputImplementation* AVInputImplementation::_instance = nullptr;
 
-    AVInputImplementation::AVInputImplementation() : _adminLock(), _service(nullptr), _registeredDsEventHandlers(false), _registeredPowerEventHandler(false)
+    AVInputImplementation::AVInputImplementation() : _adminLock(), _service(nullptr), _registeredDsEventHandlers(false), _registeredPowerEventHandler(false), _powerManagerPlugin(), _powerManagerNotification(*this)
     {
         LOGINFO("Create AVInputImplementation Instance");
 
@@ -58,12 +57,13 @@ namespace Plugin {
 
     AVInputImplementation::~AVInputImplementation()
     {
-        AVInputImplementation::_instance = nullptr;
-
-        if (_registeredPowerEventHandler) {
-            IARM_Bus_RemoveEventHandler(IARM_BUS_PWRMGR_NAME, IARM_BUS_PWRMGR_EVENT_MODECHANGED, powerEventHandler);
+        if (_registeredPowerEventHandler && _powerManagerPlugin) {
+            _powerManagerPlugin->Unregister(_powerManagerNotification.baseInterface<Exchange::IPowerManager::IModeChangedNotification>());
             _registeredPowerEventHandler = false;
         }
+        _powerManagerPlugin.Reset();
+
+        AVInputImplementation::_instance = nullptr;
 
         device::Host::getInstance().UnRegister(baseInterface<device::Host::IHdmiInEvents>());
         device::Host::getInstance().UnRegister(baseInterface<device::Host::ICompositeInEvents>());
@@ -91,13 +91,24 @@ namespace Plugin {
                 device::Host::getInstance().Register(baseInterface<device::Host::ICompositeInEvents>(), "WPE::AVInputComp");
             }
 
-            if (!_registeredPowerEventHandler) {
-                IARM_Result_t result = IARM_Bus_RegisterEventHandler(IARM_BUS_PWRMGR_NAME, IARM_BUS_PWRMGR_EVENT_MODECHANGED, powerEventHandler);
-                if (IARM_RESULT_SUCCESS == result) {
+            if (!_powerManagerPlugin) {
+                _powerManagerPlugin = PowerManagerInterfaceBuilder(_T("org.rdk.PowerManager"))
+                    .withIShell(service)
+                    .withRetryIntervalMS(200)
+                    .withRetryCount(25)
+                    .createInterface();
+            }
+
+            if (_powerManagerPlugin && !_registeredPowerEventHandler) {
+                Core::hresult result = _powerManagerPlugin->Register(
+                    _powerManagerNotification.baseInterface<Exchange::IPowerManager::IModeChangedNotification>());
+                if (Core::ERROR_NONE == result) {
                     _registeredPowerEventHandler = true;
                 } else {
                     LOGWARN("AVInput: failed to register for power mode changes: %d", result);
                 }
+            } else if (!_powerManagerPlugin) {
+                LOGWARN("AVInput: failed to acquire PowerManager interface");
             }
         }
         catch(const device::Exception& err) {
@@ -109,19 +120,21 @@ namespace Plugin {
         return Core::ERROR_NONE;
     }
 
-    void AVInputImplementation::powerEventHandler(const char* owner, IARM_EventId_t eventId, void* data, size_t len)
+    void AVInputImplementation::PowerManagerNotification::OnPowerModeChanged(
+        const Exchange::IPowerManager::PowerState currentState,
+        const Exchange::IPowerManager::PowerState newState)
     {
-        if (owner == nullptr || std::strcmp(owner, IARM_BUS_PWRMGR_NAME) != 0 ||
-            eventId != IARM_BUS_PWRMGR_EVENT_MODECHANGED || data == nullptr ||
-            len < sizeof(IARM_Bus_PWRMgr_EventData_t)) {
-            return;
-        }
+        _parent.powerModeChanged(currentState, newState);
+    }
 
-        const auto* eventData = static_cast<const IARM_Bus_PWRMgr_EventData_t*>(data);
-        if (eventData->data.state.curState == IARM_BUS_PWRMGR_POWERSTATE_STANDBY_DEEP_SLEEP &&
-            eventData->data.state.newState == IARM_BUS_PWRMGR_POWERSTATE_ON &&
-            _instance != nullptr) {
-            _instance->refreshInputState();
+    void AVInputImplementation::powerModeChanged(
+        const Exchange::IPowerManager::PowerState currentState,
+        const Exchange::IPowerManager::PowerState newState)
+    {
+        if (currentState == Exchange::IPowerManager::POWER_STATE_STANDBY_DEEP_SLEEP &&
+            newState == Exchange::IPowerManager::POWER_STATE_ON) {
+            ParamsType params(static_cast<Exchange::IAVInput::IInputDeviceIterator*>(nullptr));
+            dispatchEvent(ON_AVINPUT_REFRESH_STATE, params);
         }
     }
 
@@ -400,6 +413,10 @@ namespace Plugin {
                     ++index;
                 }
             }
+            break;
+        }
+        case ON_AVINPUT_REFRESH_STATE: {
+            refreshInputState();
             break;
         }
 
