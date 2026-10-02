@@ -20,6 +20,9 @@
 #pragma once
 
 #include "Module.h"
+#include <interfaces/IPowerManager.h>
+
+#include "PowerManagerInterface.h"
 
 #include "UtilsIarm.h"
 #include "UtilsJsonRpc.h"
@@ -91,7 +94,8 @@ namespace Plugin {
             ON_AVINPUT_STATUS_CHANGED,
             ON_AVINPUT_VIDEO_STREAM_INFO_UPDATE,
             ON_AVINPUT_GAME_FEATURE_STATUS_UPDATE,
-            ON_AVINPUT_AVI_CONTENT_TYPE_UPDATE
+            ON_AVINPUT_AVI_CONTENT_TYPE_UPDATE,
+            ON_AVINPUT_REFRESH_STATE
         };
 
         class EXTERNAL Job : public Core::IDispatch {
@@ -103,6 +107,12 @@ namespace Plugin {
             Job& operator=(const Job&) = delete;
             ~Job()
             {
+                if (_event == ON_AVINPUT_DEVICES_CHANGED) {
+                    const auto* devices = boost::get<Exchange::IAVInput::IInputDeviceIterator* const>(&_params);
+                    if (devices != nullptr && *devices != nullptr) {
+                        (*devices)->Release();
+                    }
+                }
                 if (_avInputImplementation != nullptr) {
                     _avInputImplementation->Release();
                 }
@@ -200,9 +210,37 @@ namespace Plugin {
 
     private:
 
+        class PowerManagerNotification : public Exchange::IPowerManager::IModeChangedNotification {
+        public:
+            explicit PowerManagerNotification(AVInputImplementation& parent)
+                : _parent(parent)
+            {
+            }
+
+            void OnPowerModeChanged(const Exchange::IPowerManager::PowerState currentState,
+                                    const Exchange::IPowerManager::PowerState newState) override;
+
+            template <typename T>
+            T* baseInterface()
+            {
+                static_assert(std::is_base_of<T, PowerManagerNotification>(), "base type mismatch");
+                return static_cast<T*>(this);
+            }
+
+            BEGIN_INTERFACE_MAP(PowerManagerNotification)
+                INTERFACE_ENTRY(Exchange::IPowerManager::IModeChangedNotification)
+            END_INTERFACE_MAP
+
+        private:
+            AVInputImplementation& _parent;
+        };
+
         mutable Core::CriticalSection _adminLock;
         PluginHost::IShell* _service;
         bool _registeredDsEventHandlers;
+        bool _registeredPowerEventHandler;
+        PowerManagerInterfaceRef _powerManagerPlugin;
+        Core::Sink<PowerManagerNotification> _powerManagerNotification;
 
         template <typename T>
         T* baseInterface()
@@ -241,6 +279,9 @@ namespace Plugin {
         static void dsAVVideoModeEventHandler(const char* owner, IARM_EventId_t eventId, void* data, size_t len);
         static void dsAVGameFeatureStatusEventHandler(const char* owner, IARM_EventId_t eventId, void* data, size_t len);
         static void dsAviContentTypeEventHandler(const char* owner, IARM_EventId_t eventId, void* data, size_t len);
+        void powerModeChanged(const Exchange::IPowerManager::PowerState currentState,
+                      const Exchange::IPowerManager::PowerState newState);
+        void refreshInputState();
 
         /* Notification utility methods */
         

@@ -19,6 +19,7 @@
 
 #include "AVInputImplementation.h"
 #include <curl/curl.h>
+#include <cstring>
 #include <fstream>
 #include <time.h>
 #include <utility>
@@ -43,7 +44,7 @@ namespace Plugin {
     SERVICE_REGISTRATION(AVInputImplementation, 1, 0);
     AVInputImplementation* AVInputImplementation::_instance = nullptr;
 
-    AVInputImplementation::AVInputImplementation() : _adminLock(), _service(nullptr), _registeredDsEventHandlers(false)
+    AVInputImplementation::AVInputImplementation() : _adminLock(), _service(nullptr), _registeredDsEventHandlers(false), _registeredPowerEventHandler(false), _powerManagerPlugin(), _powerManagerNotification(*this)
     {
         LOGINFO("Create AVInputImplementation Instance");
 
@@ -56,6 +57,12 @@ namespace Plugin {
 
     AVInputImplementation::~AVInputImplementation()
     {
+        if (_registeredPowerEventHandler && _powerManagerPlugin) {
+            _powerManagerPlugin->Unregister(_powerManagerNotification.baseInterface<Exchange::IPowerManager::IModeChangedNotification>());
+            _registeredPowerEventHandler = false;
+        }
+        _powerManagerPlugin.Reset();
+
         AVInputImplementation::_instance = nullptr;
 
         device::Host::getInstance().UnRegister(baseInterface<device::Host::IHdmiInEvents>());
@@ -83,6 +90,26 @@ namespace Plugin {
                 device::Host::getInstance().Register(baseInterface<device::Host::IHdmiInEvents>(), "WPE::AVInputHdmi");
                 device::Host::getInstance().Register(baseInterface<device::Host::ICompositeInEvents>(), "WPE::AVInputComp");
             }
+
+            if (!_powerManagerPlugin) {
+                _powerManagerPlugin = PowerManagerInterfaceBuilder(_T("org.rdk.PowerManager"))
+                    .withIShell(service)
+                    .withRetryIntervalMS(200)
+                    .withRetryCount(25)
+                    .createInterface();
+            }
+
+            if (_powerManagerPlugin && !_registeredPowerEventHandler) {
+                Core::hresult result = _powerManagerPlugin->Register(
+                    _powerManagerNotification.baseInterface<Exchange::IPowerManager::IModeChangedNotification>());
+                if (Core::ERROR_NONE == result) {
+                    _registeredPowerEventHandler = true;
+                } else {
+                    LOGWARN("AVInput: failed to register for power mode changes: %d", result);
+                }
+            } else if (!_powerManagerPlugin) {
+                LOGWARN("AVInput: failed to acquire PowerManager interface");
+            }
         }
         catch(const device::Exception& err) {
             LOGINFO("AVInput: Initialization failed due to device::manager::Initialize()");
@@ -91,6 +118,51 @@ namespace Plugin {
         }
 
         return Core::ERROR_NONE;
+    }
+
+    void AVInputImplementation::PowerManagerNotification::OnPowerModeChanged(
+        const Exchange::IPowerManager::PowerState currentState,
+        const Exchange::IPowerManager::PowerState newState)
+    {
+        _parent.powerModeChanged(currentState, newState);
+    }
+
+    void AVInputImplementation::powerModeChanged(
+        const Exchange::IPowerManager::PowerState currentState,
+        const Exchange::IPowerManager::PowerState newState)
+    {
+        if (currentState == Exchange::IPowerManager::POWER_STATE_STANDBY_DEEP_SLEEP &&
+            newState == Exchange::IPowerManager::POWER_STATE_ON) {
+            ParamsType params(static_cast<Exchange::IAVInput::IInputDeviceIterator*>(nullptr));
+            dispatchEvent(ON_AVINPUT_REFRESH_STATE, params);
+        }
+    }
+
+    void AVInputImplementation::refreshInputState()
+    {
+        AVInputHotplug(0, AV_HOT_PLUG_EVENT_CONNECTED, INPUT_TYPE_INT_HDMI);
+        AVInputHotplug(0, AV_HOT_PLUG_EVENT_CONNECTED, INPUT_TYPE_INT_COMPOSITE);
+
+        try {
+            device::HdmiInput& hdmiInput = device::HdmiInput::getInstance();
+            const int numberOfInputs = hdmiInput.getNumberOfInputs();
+            for (int port = 0; port < numberOfInputs; ++port) {
+                bool allmStatus = false;
+                try {
+                    hdmiInput.getHdmiALLMStatus(port, &allmStatus);
+                    AVInputALLMChange(port, allmStatus);
+                } catch (const device::Exception& err) {
+                    LOG_DEVICE_EXCEPTION1(std::to_string(port));
+                }
+
+                dsHdmiInVrrStatus_t vrrStatus{};
+                if (getVRRStatus(port, &vrrStatus)) {
+                    OnHdmiInVRRStatus(static_cast<dsHdmiInPort_t>(port), vrrStatus.vrrType);
+                }
+            }
+        } catch (const device::Exception& err) {
+            LOG_DEVICE_EXCEPTION0();
+        }
     }
 
     template <typename T>
@@ -323,6 +395,10 @@ namespace Plugin {
             }
             break;
         }
+        case ON_AVINPUT_REFRESH_STATE: {
+            refreshInputState();
+            break;
+        }
 
         default: {
             LOGWARN("Event[%u] not handled", event);
@@ -551,6 +627,7 @@ namespace Plugin {
     {
         Core::hresult result;
         std::list<WPEFramework::Exchange::IAVInput::InputDevice> inputDeviceList;
+        devices = nullptr;
         success = false;
 
         try {
@@ -655,8 +732,8 @@ namespace Plugin {
     {
         LOGWARN("AVInputHotplug [%d, %d, %d]", input, connect, type);
 
-        IInputDeviceIterator* devices;
-        bool success;
+        IInputDeviceIterator* devices = nullptr;
+        bool success = false;
 
         string typeOfInput;
 
@@ -668,11 +745,15 @@ namespace Plugin {
         }
 
         Core::hresult result = GetInputDevices(typeOfInput, devices, success);
-        if (Core::ERROR_NONE != result) {
+        if (Core::ERROR_NONE != result || !success || devices == nullptr) {
             LOGERR("AVInputHotplug [%d, %d, %d]: Failed to get devices", input, connect, type);
+            if (devices != nullptr) {
+                devices->Release();
+            }
             return;
         }
 
+        // Ownership of the iterator transfers to the queued Job.
         ParamsType params = devices;
         dispatchEvent(ON_AVINPUT_DEVICES_CHANGED, params);
     }

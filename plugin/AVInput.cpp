@@ -266,6 +266,7 @@ namespace Plugin {
 
     void AVInput::Notification::OnDevicesChanged(Exchange::IAVInput::IInputDeviceIterator* const devices)
     {
+        // Borrowed from the queued Job and valid only for this synchronous callback.
         if (devices != nullptr)
         {
             Exchange::IAVInput::InputDevice resultItem{};
