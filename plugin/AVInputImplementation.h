@@ -107,6 +107,12 @@ namespace Plugin {
             Job& operator=(const Job&) = delete;
             ~Job()
             {
+                if (_event == ON_AVINPUT_DEVICES_CHANGED) {
+                    const auto* devices = boost::get<Exchange::IAVInput::IInputDeviceIterator* const>(&_params);
+                    if (devices != nullptr && *devices != nullptr) {
+                        (*devices)->Release();
+                    }
+                }
                 if (_avInputImplementation != nullptr) {
                     _avInputImplementation->Release();
                 }

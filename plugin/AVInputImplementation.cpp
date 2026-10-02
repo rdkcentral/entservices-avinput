@@ -627,6 +627,7 @@ namespace Plugin {
     {
         Core::hresult result;
         std::list<WPEFramework::Exchange::IAVInput::InputDevice> inputDeviceList;
+        devices = nullptr;
         success = false;
 
         try {
@@ -731,8 +732,8 @@ namespace Plugin {
     {
         LOGWARN("AVInputHotplug [%d, %d, %d]", input, connect, type);
 
-        IInputDeviceIterator* devices;
-        bool success;
+        IInputDeviceIterator* devices = nullptr;
+        bool success = false;
 
         string typeOfInput;
 
@@ -744,11 +745,15 @@ namespace Plugin {
         }
 
         Core::hresult result = GetInputDevices(typeOfInput, devices, success);
-        if (Core::ERROR_NONE != result) {
+        if (Core::ERROR_NONE != result || !success || devices == nullptr) {
             LOGERR("AVInputHotplug [%d, %d, %d]: Failed to get devices", input, connect, type);
+            if (devices != nullptr) {
+                devices->Release();
+            }
             return;
         }
 
+        // Ownership of the iterator transfers to the queued Job.
         ParamsType params = devices;
         dispatchEvent(ON_AVINPUT_DEVICES_CHANGED, params);
     }
