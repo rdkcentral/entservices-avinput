@@ -145,16 +145,6 @@ namespace Plugin {
 
         try {
             device::HdmiInput& hdmiInput = device::HdmiInput::getInstance();
-            const int activePort = hdmiInput.getActivePort();
-            if (activePort >= 0) {
-                AVInputStatusChange(activePort, hdmiInput.isPresented(), INPUT_TYPE_INT_HDMI);
-                if (hdmiInput.isPresented()) {
-                    dsVideoPortResolution_t resolution{};
-                    hdmiInput.getCurrentVideoModeObj(resolution);
-                    AVInputVideoModeUpdate(activePort, resolution, INPUT_TYPE_INT_HDMI);
-                }
-            }
-
             const int numberOfInputs = hdmiInput.getNumberOfInputs();
             for (int port = 0; port < numberOfInputs; ++port) {
                 bool allmStatus = false;
@@ -167,18 +157,8 @@ namespace Plugin {
 
                 dsHdmiInVrrStatus_t vrrStatus{};
                 if (getVRRStatus(port, &vrrStatus)) {
-                    OnHdmiInVRRStatus(port, vrrStatus.vrrType);
+                    OnHdmiInVRRStatus(static_cast<dsHdmiInPort_t>(port), vrrStatus.vrrType);
                 }
-            }
-        } catch (const device::Exception& err) {
-            LOG_DEVICE_EXCEPTION0();
-        }
-
-        try {
-            device::CompositeInput& compositeInput = device::CompositeInput::getInstance();
-            const int activePort = compositeInput.getActivePort();
-            if (activePort >= 0) {
-                AVInputStatusChange(activePort, compositeInput.isPresented(), INPUT_TYPE_INT_COMPOSITE);
             }
         } catch (const device::Exception& err) {
             LOG_DEVICE_EXCEPTION0();

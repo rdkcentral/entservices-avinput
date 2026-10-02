@@ -20,6 +20,8 @@
 #pragma once
 
 #include "Module.h"
+#include <interfaces/IPowerManager.h>
+
 #include "PowerManagerInterface.h"
 
 #include "UtilsIarm.h"
@@ -37,7 +39,6 @@
 
 #include <interfaces/IAVInput.h>
 #include <interfaces/Ids.h>
-#include <interfaces/IPowerManager.h>
 
 #include <boost/variant.hpp>
 #include <com/com.h>
