@@ -19,10 +19,12 @@
 
 #include "AVInputImplementation.h"
 #include <curl/curl.h>
+#include <cstring>
 #include <fstream>
 #include <time.h>
 #include <utility>
 
+#include "pwrMgr.h"
 #include "UtilsJsonRpc.h"
 
 #define STR_ALLM                        "ALLM"
@@ -43,7 +45,7 @@ namespace Plugin {
     SERVICE_REGISTRATION(AVInputImplementation, 1, 0);
     AVInputImplementation* AVInputImplementation::_instance = nullptr;
 
-    AVInputImplementation::AVInputImplementation() : _adminLock(), _service(nullptr), _registeredDsEventHandlers(false)
+    AVInputImplementation::AVInputImplementation() : _adminLock(), _service(nullptr), _registeredDsEventHandlers(false), _registeredPowerEventHandler(false)
     {
         LOGINFO("Create AVInputImplementation Instance");
 
@@ -57,6 +59,11 @@ namespace Plugin {
     AVInputImplementation::~AVInputImplementation()
     {
         AVInputImplementation::_instance = nullptr;
+
+        if (_registeredPowerEventHandler) {
+            IARM_Bus_RemoveEventHandler(IARM_BUS_PWRMGR_NAME, IARM_BUS_PWRMGR_EVENT_MODECHANGED, powerEventHandler);
+            _registeredPowerEventHandler = false;
+        }
 
         device::Host::getInstance().UnRegister(baseInterface<device::Host::IHdmiInEvents>());
         device::Host::getInstance().UnRegister(baseInterface<device::Host::ICompositeInEvents>());
@@ -83,6 +90,15 @@ namespace Plugin {
                 device::Host::getInstance().Register(baseInterface<device::Host::IHdmiInEvents>(), "WPE::AVInputHdmi");
                 device::Host::getInstance().Register(baseInterface<device::Host::ICompositeInEvents>(), "WPE::AVInputComp");
             }
+
+            if (!_registeredPowerEventHandler) {
+                IARM_Result_t result = IARM_Bus_RegisterEventHandler(IARM_BUS_PWRMGR_NAME, IARM_BUS_PWRMGR_EVENT_MODECHANGED, powerEventHandler);
+                if (IARM_RESULT_SUCCESS == result) {
+                    _registeredPowerEventHandler = true;
+                } else {
+                    LOGWARN("AVInput: failed to register for power mode changes: %d", result);
+                }
+            }
         }
         catch(const device::Exception& err) {
             LOGINFO("AVInput: Initialization failed due to device::manager::Initialize()");
@@ -91,6 +107,69 @@ namespace Plugin {
         }
 
         return Core::ERROR_NONE;
+    }
+
+    void AVInputImplementation::powerEventHandler(const char* owner, IARM_EventId_t eventId, void* data, size_t len)
+    {
+        if (owner == nullptr || std::strcmp(owner, IARM_BUS_PWRMGR_NAME) != 0 ||
+            eventId != IARM_BUS_PWRMGR_EVENT_MODECHANGED || data == nullptr ||
+            len < sizeof(IARM_Bus_PWRMgr_EventData_t)) {
+            return;
+        }
+
+        const auto* eventData = static_cast<const IARM_Bus_PWRMgr_EventData_t*>(data);
+        if (eventData->data.state.curState == IARM_BUS_PWRMGR_POWERSTATE_STANDBY_DEEP_SLEEP &&
+            eventData->data.state.newState == IARM_BUS_PWRMGR_POWERSTATE_ON &&
+            _instance != nullptr) {
+            _instance->refreshInputState();
+        }
+    }
+
+    void AVInputImplementation::refreshInputState()
+    {
+        AVInputHotplug(0, AV_HOT_PLUG_EVENT_CONNECTED, INPUT_TYPE_INT_HDMI);
+        AVInputHotplug(0, AV_HOT_PLUG_EVENT_CONNECTED, INPUT_TYPE_INT_COMPOSITE);
+
+        try {
+            device::HdmiInput& hdmiInput = device::HdmiInput::getInstance();
+            const int activePort = hdmiInput.getActivePort();
+            if (activePort >= 0) {
+                AVInputStatusChange(activePort, hdmiInput.isPresented(), INPUT_TYPE_INT_HDMI);
+                if (hdmiInput.isPresented()) {
+                    dsVideoPortResolution_t resolution{};
+                    hdmiInput.getCurrentVideoModeObj(resolution);
+                    AVInputVideoModeUpdate(activePort, resolution, INPUT_TYPE_INT_HDMI);
+                }
+            }
+
+            const int numberOfInputs = hdmiInput.getNumberOfInputs();
+            for (int port = 0; port < numberOfInputs; ++port) {
+                bool allmStatus = false;
+                try {
+                    hdmiInput.getHdmiALLMStatus(port, &allmStatus);
+                    AVInputALLMChange(port, allmStatus);
+                } catch (const device::Exception& err) {
+                    LOG_DEVICE_EXCEPTION1(std::to_string(port));
+                }
+
+                dsHdmiInVrrStatus_t vrrStatus{};
+                if (getVRRStatus(port, &vrrStatus)) {
+                    OnHdmiInVRRStatus(port, vrrStatus.vrrType);
+                }
+            }
+        } catch (const device::Exception& err) {
+            LOG_DEVICE_EXCEPTION0();
+        }
+
+        try {
+            device::CompositeInput& compositeInput = device::CompositeInput::getInstance();
+            const int activePort = compositeInput.getActivePort();
+            if (activePort >= 0) {
+                AVInputStatusChange(activePort, compositeInput.isPresented(), INPUT_TYPE_INT_COMPOSITE);
+            }
+        } catch (const device::Exception& err) {
+            LOG_DEVICE_EXCEPTION0();
+        }
     }
 
     template <typename T>

@@ -203,6 +203,7 @@ namespace Plugin {
         mutable Core::CriticalSection _adminLock;
         PluginHost::IShell* _service;
         bool _registeredDsEventHandlers;
+        bool _registeredPowerEventHandler;
 
         template <typename T>
         T* baseInterface()
@@ -241,6 +242,9 @@ namespace Plugin {
         static void dsAVVideoModeEventHandler(const char* owner, IARM_EventId_t eventId, void* data, size_t len);
         static void dsAVGameFeatureStatusEventHandler(const char* owner, IARM_EventId_t eventId, void* data, size_t len);
         static void dsAviContentTypeEventHandler(const char* owner, IARM_EventId_t eventId, void* data, size_t len);
+        static void powerEventHandler(const char* owner, IARM_EventId_t eventId, void* data, size_t len);
+
+        void refreshInputState();
 
         /* Notification utility methods */
         
