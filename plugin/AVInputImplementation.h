@@ -214,6 +214,13 @@ namespace Plugin {
             void OnPowerModeChanged(const Exchange::IPowerManager::PowerState currentState,
                                     const Exchange::IPowerManager::PowerState newState) override;
 
+            template <typename T>
+            T* baseInterface()
+            {
+                static_assert(std::is_base_of<T, PowerManagerNotification>(), "base type mismatch");
+                return static_cast<T*>(this);
+            }
+
             BEGIN_INTERFACE_MAP(PowerManagerNotification)
                 INTERFACE_ENTRY(Exchange::IPowerManager::IModeChangedNotification)
             END_INTERFACE_MAP
