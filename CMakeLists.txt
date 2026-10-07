@@ -24,7 +24,6 @@ cmake_minimum_required(VERSION 3.3)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/")
 
 find_package(WPEFramework)
-find_package(${NAMESPACE}Helpers REQUIRED)
 
 option(COMCAST_CONFIG "Comcast services configuration" ON)
 if(COMCAST_CONFIG)

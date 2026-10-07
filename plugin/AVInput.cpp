@@ -173,9 +173,10 @@ namespace Plugin {
     //   device::CompositeInput::getInstance().getNumberOfInputs() →  IDeviceSettingsCompositeIn::GetNrOfCompositeInputs()
     //   device::CompositeInput::getInstance().isPortConnected(i)  →  IDeviceSettingsCompositeIn::GetCompositeInStatus()
     // =========================================================================
-    JsonArray AVInput::getInputDevices(int iType)
+    JsonArray AVInput::getInputDevices(int iType, bool& success)
     {
         JsonArray list;
+        success = false;
         try
         {
             Core::hresult comResult = Core::ERROR_NONE;
@@ -186,6 +187,8 @@ namespace Plugin {
                     comResult = hdmiIn->GetHDMIInNumberOfInputs(num);
                     if (Core::ERROR_NONE != comResult) {
                         LOGERR("GetHDMIInNumberOfInputs failed, Error: %d", static_cast<int>(comResult));
+                        hdmiIn->Release();
+                        return list;
                     }
 
                     // Collect per-port connection status via GetHDMIInStatus iterator.
@@ -196,6 +199,11 @@ namespace Plugin {
                     comResult = hdmiIn->GetHDMIInStatus(hdmiStatus, portIter);
                     if (Core::ERROR_NONE != comResult) {
                         LOGERR("GetHDMIInStatus failed, Error: %d", static_cast<int>(comResult));
+                        if (portIter != nullptr) {
+                            portIter->Release();
+                        }
+                        hdmiIn->Release();
+                        return list;
                     }
 
                     std::vector<bool> connected(static_cast<size_t>(num), false);
@@ -224,6 +232,7 @@ namespace Plugin {
                         list.Add(hash);
                     }
                     hdmiIn->Release();
+                    success = true;
                 }
                 else {
                     LOGWARN("IDeviceSettingsHDMIIn not available");
@@ -245,6 +254,8 @@ namespace Plugin {
                     comResult = compositeIn->GetCompositeInStatus(status);
                     if (Core::ERROR_NONE != comResult) {
                         LOGERR("GetCompositeInStatus failed, Error: %d", static_cast<int>(comResult));
+                        compositeIn->Release();
+                        return list;
                     }
 
                     for (int i = 0; i < num; i++) {
@@ -260,6 +271,7 @@ namespace Plugin {
                         list.Add(hash);
                     }
                     compositeIn->Release();
+                    success = true;
                 }
                 else {
                     LOGWARN("IDeviceSettingsCompositeIn not available");
@@ -274,11 +286,15 @@ namespace Plugin {
 
     void AVInput::refreshDeviceCache()
     {
-        JsonArray hdmi = getInputDevices(INPUT_TYPE_INT_HDMI);
-        JsonArray composite = getInputDevices(INPUT_TYPE_INT_COMPOSITE);
+        bool hdmiSuccess = false;
+        bool compositeSuccess = false;
+        JsonArray hdmi = getInputDevices(INPUT_TYPE_INT_HDMI, hdmiSuccess);
+        JsonArray composite = getInputDevices(INPUT_TYPE_INT_COMPOSITE, compositeSuccess);
         _deviceCacheLock.Lock();
         _cachedHdmiDevices = hdmi;
         _cachedCompositeDevices = composite;
+        _hdmiDeviceCacheValid = hdmiSuccess;
+        _compositeDeviceCacheValid = compositeSuccess;
         _deviceCacheLock.Unlock();
         LOGINFO("AVInput::refreshDeviceCache: cached %d HDMI, %d composite devices", hdmi.Length(), composite.Length());
     }
@@ -298,19 +314,32 @@ namespace Plugin {
             }
             _deviceCacheLock.Lock();
             if (iType == INPUT_TYPE_INT_HDMI) {
+                if (!_hdmiDeviceCacheValid) {
+                    _deviceCacheLock.Unlock();
+                    returnResponse(false);
+                }
                 response["devices"] = _cachedHdmiDevices;
             } else if (iType == INPUT_TYPE_INT_COMPOSITE) {
+                if (!_compositeDeviceCacheValid) {
+                    _deviceCacheLock.Unlock();
+                    returnResponse(false);
+                }
                 response["devices"] = _cachedCompositeDevices;
             } else {
                 // Fallback: query live for unrecognised types
                 _deviceCacheLock.Unlock();
-                response["devices"] = getInputDevices(iType);
-                returnResponse(true);
+                bool success = false;
+                response["devices"] = getInputDevices(iType, success);
+                returnResponse(success);
             }
             _deviceCacheLock.Unlock();
         }
         else {
             _deviceCacheLock.Lock();
+            if (!_hdmiDeviceCacheValid || !_compositeDeviceCacheValid) {
+                _deviceCacheLock.Unlock();
+                returnResponse(false);
+            }
             JsonArray combined = _cachedHdmiDevices;
             for (int i = 0; i < _cachedCompositeDevices.Length(); i++) {
                 combined.Add(_cachedCompositeDevices.Get(i));
@@ -371,9 +400,11 @@ namespace Plugin {
             _parent._deviceCacheLock.Lock();
             if (newHdmi.Length() > 0) {
                 _parent._cachedHdmiDevices = std::move(newHdmi);
+                _parent._hdmiDeviceCacheValid = true;
             }
             if (newComposite.Length() > 0) {
                 _parent._cachedCompositeDevices = std::move(newComposite);
+                _parent._compositeDeviceCacheValid = true;
             }
             _parent._deviceCacheLock.Unlock();
 
@@ -393,6 +424,8 @@ namespace Plugin {
         _deviceCacheLock.Lock();
         _cachedHdmiDevices = JsonArray();
         _cachedCompositeDevices = JsonArray();
+        _hdmiDeviceCacheValid = false;
+        _compositeDeviceCacheValid = false;
         _deviceCacheLock.Unlock();
     }
 } // namespace Plugin
