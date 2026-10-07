@@ -28,6 +28,7 @@
 #include "DeviceSettingsInterface.h"
 
 #include <algorithm>
+#include <tuple>
 #include <vector>
 
 #include <interfaces/IAVInput.h>

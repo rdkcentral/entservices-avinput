@@ -314,7 +314,15 @@ namespace Plugin {
                             (*index)->OnDevicesChanged(devices);
                             ++index;
                         }
+                        if (devices != nullptr) {
+                            devices->Release();
+                            devices = nullptr;
+                        }
                     } else {
+                        if (devices != nullptr) {
+                            devices->Release();
+                            devices = nullptr;
+                        }
                         LOGERR("ON_AVINPUT_DEVICES_CHANGED [%d, %d, %d]: Failed to get devices", input, connect, type);
                     }
                 }
@@ -1513,17 +1521,23 @@ namespace Plugin {
                 LOGINFO("%02X ", spdVect[itr]);
             }
 
-            if (spdVect.size() > 0) {
+            constexpr size_t kSpdInfoFrameSize = 28;
+            if (spdVect.size() >= kSpdInfoFrameSize) {
                 // COM-RPC: spdBuf layout matches dsSpd_infoframe_st:
                 //   [0]=pkttype, [1]=version, [2]=length, [3..10]=vendor_name[8],
                 //   [11..26]=product_des[16], [27]=source_info
+                const string vendorName(reinterpret_cast<const char*>(&spdVect[3]), 8);
+                const string productDescription(reinterpret_cast<const char*>(&spdVect[11]), 16);
                 char str[200] = { 0 };
                 snprintf(str, sizeof(str), "Packet Type:%02X,Version:%u,Length:%u,vendor name:%s,product des:%s,source info:%02X",
                     spdVect[0], spdVect[1], spdVect[2],
-                    reinterpret_cast<const char*>(&spdVect[3]),
-                    reinterpret_cast<const char*>(&spdVect[11]),
+                    vendorName.c_str(),
+                    productDescription.c_str(),
                     spdVect[27]);
                 HDMISPD = str;
+            } else {
+                success = false;
+                LOGERR("GetSPD: Invalid SPD data length: %zu", spdVect.size());
             }
         } catch (const std::exception& err) {
             success = false;
