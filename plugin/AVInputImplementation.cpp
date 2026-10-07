@@ -1430,6 +1430,8 @@ namespace Plugin {
             if (comResult != Core::ERROR_NONE) {
                 LOGERR("GetHDMISPDInformation failed for portId=%d, Error: %d", id, static_cast<int>(comResult));
                 success = false;
+                hdmiIn->Release();
+                return Core::ERROR_NONE;
             }
             else {
                 LOGINFO("GetHDMISPDInformation succeeded for portId=%d", id);

@@ -390,6 +390,10 @@ namespace Plugin {
 
     void AVInput::OnDeviceSettingsDeactivated()
     {
+        _deviceCacheLock.Lock();
+        _cachedHdmiDevices = JsonArray();
+        _cachedCompositeDevices = JsonArray();
+        _deviceCacheLock.Unlock();
     }
 } // namespace Plugin
 } // namespace WPEFramework
