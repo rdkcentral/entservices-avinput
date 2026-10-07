@@ -60,10 +60,10 @@ namespace Plugin {
 
     AVInputImplementation::~AVInputImplementation()
     {
+        // Close the DeviceSettings link while notification delegates are still alive.
+        DSHelper::Close();
         AVInputImplementation::_instance = nullptr;
 
-        // COM-RPC: notifications are unregistered in Deinitialize() via
-        // DSHelper::Close() which calls OnDeviceSettingsDeactivated()
         _registeredDsEventHandlers = false;
     }
 
