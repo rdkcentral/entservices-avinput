@@ -127,6 +127,8 @@ namespace Plugin {
 
             Exchange::JAVInput::Unregister(*this);
 
+            _avInput->Configure(nullptr);
+
             // COM-RPC: close the DeviceSettings link
             DSHelper::Close();
 

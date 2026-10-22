@@ -133,14 +133,35 @@ namespace Plugin {
 
     Core::hresult AVInputImplementation::Configure(PluginHost::IShell* service)
     {
-        _service = service;
-
-        // COM-RPC: open the DeviceSettings plugin link.
-        // DS_IARM equivalent: device::Manager::Initialize()
-        // OnDeviceSettingsActivated() fires once DeviceSettings is ready,
-        // which registers the HDMI-In and Composite-In notification delegates.
-        DSHelper::Open(service, "AVInputImpl");
-
+        if (service)
+        {
+            // AVInput::Initialize() flow - configure the service and open the DeviceSettings link.
+            _service = service;
+            // COM-RPC: open the DeviceSettings plugin link.
+            // DS_IARM equivalent: device::Manager::Initialize()
+            // OnDeviceSettingsActivated() fires once DeviceSettings is ready,
+            // which registers the HDMI-In and Composite-In notification delegates.
+            DSHelper::Open(service, "AVInputImpl");
+        }
+        else
+        {
+            // AVInput::Deinitialize() flow — unregister DS notifications and close the DeviceSettings link.
+            {
+                auto* hdmiIn = DSHelper::AcquireSubInterface<Exchange::IDeviceSettingsHDMIIn>();
+                if (hdmiIn != nullptr) {
+                    hdmiIn->Unregister(&_DSHDMIInNotification);
+                    hdmiIn->Release();
+                }
+            }
+            {
+                auto* compositeIn = DSHelper::AcquireSubInterface<Exchange::IDeviceSettingsCompositeIn>();
+                if (compositeIn != nullptr) {
+                    compositeIn->Unregister(&_DSCompositeInNotification);
+                    compositeIn->Release();
+                }
+            }
+            DSHelper::Close();
+        }
         return Core::ERROR_NONE;
     }
 
