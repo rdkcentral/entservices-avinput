@@ -168,14 +168,12 @@ namespace Plugin {
         mutable Core::CriticalSection _deviceCacheLock;
         JsonArray _cachedHdmiDevices;
         JsonArray _cachedCompositeDevices;
-        bool _hdmiDeviceCacheValid { false };
-        bool _compositeDeviceCacheValid { false };
 
         void Deactivated(RPC::IRemoteConnection* connection);
 
         // COM-RPC: replaces direct libds calls inside getInputDevices()
         // DS_IARM used device::HdmiInput::getInstance() / device::CompositeInput::getInstance()
-        JsonArray getInputDevices(int iType, bool& success);
+        JsonArray getInputDevices(int iType);
         void refreshDeviceCache();
         uint32_t getInputDevicesWrapper(const JsonObject& parameters, JsonObject& response);
 

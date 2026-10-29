@@ -1603,28 +1603,36 @@ namespace Plugin {
             auto* audio = DSHelper::AcquireSubInterface<Exchange::IDeviceSettingsAudio>();
             if (audio == nullptr) {
                 LOGERR("IDeviceSettingsAudio not available");
+                LOGWARN("Not setting SoC volume !!!\n");
                 successResult.success = false;
                 return Core::ERROR_NONE;
             }
-            Core::hresult comResult = Core::ERROR_NONE;
-            comResult = audio->SetAudioMixerLevels(0, Exchange::IDeviceSettingsAudio::AUDIO_INPUT_PRIMARY, primaryVolume);
+            Core::hresult comResult = audio->SetAudioMixerLevels(0, Exchange::IDeviceSettingsAudio::AUDIO_INPUT_PRIMARY, primaryVolume);
             if (comResult != Core::ERROR_NONE) {
                 LOGERR("SetAudioMixerLevels failed for primaryVolume=%d, Error: %d", primaryVolume, static_cast<int>(comResult));
+                LOGWARN("Not setting SoC volume !!!\n");
                 successResult.success = false;
+            } else {
+                // Legacy stops at the first failure (exception) and does not program the system input
+                comResult = audio->SetAudioMixerLevels(0, Exchange::IDeviceSettingsAudio::AUDIO_INPUT_SYSTEM, inputVolume);
+                if (comResult != Core::ERROR_NONE) {
+                    LOGERR("SetAudioMixerLevels failed for inputVolume=%d, Error: %d", inputVolume, static_cast<int>(comResult));
+                    LOGWARN("Not setting SoC volume !!!\n");
+                    successResult.success = false;
+                }
             }
-            comResult = audio->SetAudioMixerLevels(0, Exchange::IDeviceSettingsAudio::AUDIO_INPUT_SYSTEM, inputVolume);
-            if (comResult != Core::ERROR_NONE) {
-                LOGERR("SetAudioMixerLevels failed for inputVolume=%d, Error: %d", inputVolume, static_cast<int>(comResult));
-                successResult.success = false;
+            if (successResult.success) {
+                LOGINFO("Setting MixerLevels: primaryVolume[%d] inputVolume[%d]", primaryVolume, inputVolume);
             }
-            LOGINFO("Setting MixerLevels: primaryVolume[%d] inputVolume[%d]", primaryVolume, inputVolume);
             audio->Release();
         } catch (...) {
             LOGERR("Exception occurred while setting SoC volume levels");
             successResult.success = false;
         }
 
-        isAudioBalanceSet = successResult.success;
+        if (successResult.success) {
+            isAudioBalanceSet = true;
+        }
         return Core::ERROR_NONE;
     }
 
@@ -1648,7 +1656,7 @@ namespace Plugin {
                 static_cast<Exchange::IDeviceSettingsHDMIIn::HDMIInPort>(id),
                 allmSupport);
             if (comResult == Core::ERROR_NONE) {
-                LOGINFO("SetEdid2AllmSupport portId[%s] allm=%d", portId.c_str(), allmSupport);
+                LOGWARN("AVInput -  allmsupport:%d portId:%s ", allmSupport, portId.c_str());
                 successResult.success = true;
             } else {
                 LOGERR("SetEdid2AllmSupport failed for portId=%d, Error: %d", id, static_cast<int>(comResult));
