@@ -1911,15 +1911,10 @@ namespace Plugin {
         // We use IDeviceSettingsAudio which already has GetAudioHDMIARCPortId().
         auto* audio = DSHelper::AcquireSubInterface<Exchange::IDeviceSettingsAudio>();
         if (audio != nullptr) {
-            // Find HDMI_ARC0 port handle — iterate audio ports to find it
-            // For simplicity, use handle 0 (caller must have audio port handles cached)
             int32_t id = -1;
-            // GetAudioHDMIARCPortId requires an audio port handle; use a temporary handle query
-            // In practice this is called with the HDMI_ARC0 handle.
-            // Since we don't have cached audio handles here, query via the Audio sub-interface
-            // with handle 0 as a best-effort approach.
-            Core::hresult comResult = Core::ERROR_NONE;
-            comResult = audio->GetAudioHDMIARCPortId(0, id);
+            // The handle argument is unused by GetAudioHDMIARCPortId (it reads the
+            // 'HDMIARC.port.Id' persistence value), so a placeholder of 0 is sufficient.
+            Core::hresult comResult = audio->GetAudioHDMIARCPortId(0, id);
             if (comResult == Core::ERROR_NONE && id >= 0) {
                 LOGINFO("HDMI ARC port ID: %d", id);
                 portId = std::to_string(id);
