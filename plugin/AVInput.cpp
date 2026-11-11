@@ -30,6 +30,7 @@
 // Thunder 4.x. This can be refactored after migrating to 5.x.
 #define AVINPUT_METHOD_GET_INPUT_DEVICES "getInputDevices"
 
+//Test
 namespace WPEFramework {
 namespace {
 
