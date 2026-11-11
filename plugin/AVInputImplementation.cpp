@@ -17,6 +17,7 @@
  * limitations under the License.
  */
 
+
 #include "AVInputImplementation.h"
 #include <fstream>
 #include <time.h>
@@ -34,6 +35,7 @@
 
 static bool isAudioBalanceSet = false;
 static int planeType = 0;
+
 
 using namespace std;
 
